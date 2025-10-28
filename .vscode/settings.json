@@ -1,0 +1,17 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.pythonProjects": [],
+    "cSpell.words": [
+        "lightpink",
+        "startfile",
+        "UEDA"
+    ],
+    "aiCodePro.preferredModels": [
+    "codellama:7b",
+    "deepseek-coder:6.7b",
+    "dolphin-mixtral:8x7b",
+    "mistral:7b",
+    ],
+    "aiCodePro.localLLMEndpoint": "http://localhost:11434",
+    "aiCodePro.defaultPersonality": "buzzy"
+}

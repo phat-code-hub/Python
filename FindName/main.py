@@ -19,8 +19,22 @@ class FileSearch(QWidget):
         self.language,self.search_path = self.get_default_values()
         self.lang={"English":{"ENG":"English","JP":"Japanese","VN"  :"Vietnamese"},"Japanese":{"ENG":"英語","JP":"日本語","VN"  :"ベトナム語"},
                 "Vietnamese":{"ENG":"Tiếng Anh","JP":"Tiếng Nhật","VN"  :"Tiếng Việt"}}
-        self.search={"English":{"AND":"All","OR":"Contain","NOT"  :"Not contain"},"Japanese":{"AND":"全て","OR":"いずれか","NOT"  :"除外"},
+        self.search={"English":{"AND":"All","OR":"Contain","NOT"  :"Not contain"},"Japanese":{"AND":"全て","OR":"いずれか","NOT"  :"いずれか除外"},
                 "Vietnamese":{"AND":"Tất cả","OR":"Bao hàm","NOT"  :"Không bao hàm"}}
+        self.place_holder={"English":"Input search keywords","Japanese":"検索キーワードを入力","Vietnamese":"Nhập từ khóa tìm kiếm"}
+        self.search_hint={"English":"Multiple keywords are separated by ',:;' or spaces",
+                        "Japanese":"複数のキーワードは英字、数字、記号とし',:;'または空白で区切って入力",
+                        "Vietnamese":"Các từ khóa cách nhau bởi ',:;' hoặc khoảng trắng"}
+        self.logic_hint = {"English":
+                                {0: "Any of the keywords matches",
+                                1: "All of the keywords matches, ignore order",
+                                2: "Not contain all keywords"},
+                        "Japanese":{0: "いずれかのキーワードに一致",
+                                1: "順番問わず、全てのキーワードに一致",
+                                2: "全てのキーワードに一致しない"},
+                        "Vietnamese":{0: "Có ít nhất một từ khóa ",
+                                1: "Tất cả đều tìm thấy , không cần thứ tự",
+                                2: "Không chứa tất cả các từ khóa này"}}
         self.label ={"English": {
                         "Title": "File Search",
                         "Search Path:":"Search Path:","Search keyword:":"Search keyword:",
@@ -96,11 +110,9 @@ class FileSearch(QWidget):
         self.language_radio.addButton(self.japanese_radio,0)
         self.language_radio.addButton(self.english_radio,1)
         self.language_radio.addButton(self.vietnamese_radio,2)
-        
         lang_layout.addWidget(self.japanese_radio)
         lang_layout.addWidget(self.english_radio)
         lang_layout.addWidget(self.vietnamese_radio)
-        
         layout.addLayout(lang_layout)
         self.japanese_radio.setChecked(True)
         #Folder Search path
@@ -122,11 +134,11 @@ class FileSearch(QWidget):
         keyword_layout = QHBoxLayout()
         self.search_label = QLabel(self.label[self.language]["Search keyword:"])
         self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText(self.place_holder[self.language])
         self.search_button = QPushButton(self.label[self.language]["SearchButton"])
         
         keyword_layout.addWidget(self.search_label)
         keyword_layout.addWidget(self.search_input)
-        # keyword_layout.addWidget(self.search_folder_change)
         keyword_layout.addWidget(self.search_button)
         layout.addLayout(keyword_layout)
         
@@ -178,7 +190,6 @@ class FileSearch(QWidget):
         self.info_label = QLabel(self.label[self.language]["Info"])
         self.info = QLabel()
         # self.info.setStyleSheet("color: red; font-style: italic;text-align: left;")
-        # self.info.setStyleSheet("color: light_cyan; font-style: italic;text-align: left;")
         info_layout.addWidget(self.info_label)
         info_layout.addWidget(self.info)
         layout.addLayout(info_layout)
@@ -202,47 +213,65 @@ class FileSearchHandler(FileSearch):
             self.japanese_radio.setChecked(True)
         else:
             self.vietnamese_radio.setChecked(True)  
-
         self.search_radio.button(self.search_logic).setChecked(True)
+        self.logic = self.logic_hint[self.language]
         #Set  default values
         self.file_type_combo.setCurrentIndex(self.index)
         self.keywords = ""
         self.condition = None
-        self.found_files = []
-        self.found_folders = set()
-        self.filtered_files = []
-        self.filtered_folders = set()
-        self.filtered_files_short = []
-        self.filtered_folders_short = set()
-        # self.found_files_short = []
-        # self.found_folders_short = set()
-        
+        self.search_type = self.ext_type[self.index]
+        self.reset_data()
         self.index = 0
         self.source = 1
         self.connect_signals()
+        self.change_logic()
+        self.search_tooltips()
+        self.file_tooltip()
+        self.folder_tooltip()
     #----------------------------------------------------------------
     def connect_signals(self):
         #Change language
-        self.language_radio.buttonClicked.connect(self.update_language)
-        # self.english_radio.toggled.connect(self.update_language)
+        self.language_radio.buttonClicked.connect(self.change_language)
+        # self.english_radio.toggled.connect(self.change_language)
         # Change Search Folder
         self.search_folder_change.clicked.connect(self.open_file_dialog)
         # Search Folder and Files
-        self.search_input.returnPressed.connect(lambda:self.change_path(source=1))
-        self.search_button.clicked.connect(lambda:self.change_path(source=1))
+        self.search_input.returnPressed.connect(lambda:self.change_search_source(source=1))
+        self.search_button.clicked.connect(lambda:self.change_search_source(source=1))
         # Connect the combo box's currentIndexChanged signal to the search_files method
         self.file_type_combo.currentIndexChanged.connect(self.change_type)
         #Search logic
         self.search_radio.buttonClicked.connect(self.change_logic)
-        # self.and_radio.toggled.connect(self.change_logic)
         #CLick self.Folder_list
-        self.folder_list.currentItemChanged.connect(lambda : self.change_path(source=2))
+        self.folder_list.currentItemChanged.connect(lambda : self.change_search_source(source=2))
         # self.folder_list.itemDoubleClicked.connect(self.open_folder_location)
         #Show file info
         self.file_list.currentItemChanged.connect(self.show_file_info)
         self.file_list.itemDoubleClicked.connect(self.open_file_location)
     #----------------------------------------------------------------
-    def update_language(self):
+    def folder_tooltip(self):
+        pass
+    #----------------------------------------------------------------
+    def file_tooltip(self):
+        pass
+    #----------------------------------------------------------------
+    def search_tooltips(self):
+        self.search_input.setToolTip(self.search_hint[self.language])
+    #----------------------------------------------------------------
+    def logic_tooltips(self):
+        self.or_radio.setToolTip(self.logic[0])
+        self.and_radio.setToolTip(self.logic[1])
+        self.not_radio.setToolTip(self.logic[2])
+    #----------------------------------------------------------------
+    def open_file_dialog(self):
+        select_folder = self.label[self.language]["SelectFolder"]
+        folder_path = QFileDialog.getExistingDirectory(self, select_folder,self.search_path)
+        if folder_path:
+            self.search_path = folder_path
+            self.search_folder_path.setText(folder_path)
+            self.saved_path_to_registry()
+    #----------------------------------------------------------------
+    def change_language(self):
         langs,labels,types,search =self.lang,self.label,self.type,self.search
         if self.english_radio.isChecked():
             self.language = 'English'
@@ -250,9 +279,11 @@ class FileSearchHandler(FileSearch):
             self.language = 'Japanese'
         else:
             self.language = 'Vietnamese'
-        print(self.language)
         #Update changed language to registry
         self.save_before_close(changed_item=1)
+        self.search_tooltips()
+        self.logic_tooltips()
+        self.change_logic()
         #Set the labels and combo box items based on the selected language
         self.setWindowTitle(labels[self.language]["Title"])
         self.english_radio.setText(langs[self.language]["ENG"])  
@@ -260,6 +291,7 @@ class FileSearchHandler(FileSearch):
         self.vietnamese_radio.setText(langs[self.language]["VN"])
         self.search_folder_label.setText(labels[self.language]["Search Path:"])
         self.search_label.setText(labels[self.language]["Search keyword:"])
+        self.search_input.setPlaceholderText(self.place_holder[self.language])
         self.search_button.setText(labels[self.language]["SearchButton"])
         self.and_radio.setText(search[self.language]["AND"])
         self.or_radio.setText(search[self.language]["OR"])
@@ -273,19 +305,21 @@ class FileSearchHandler(FileSearch):
         self.file_type_combo.setCurrentIndex(0)
         self.change_type()
     #----------------------------------------------------------------
-    def change_path(self,source =1):
+    def reset_data(self):
+        self.found_files = []
+        self.found_folders = set()
+        self.found_files_short = []
+        self.found_folders_short = set()
+    #----------------------------------------------------------------
+    def change_search_source(self,source =1):
         if source == 2:
             if self.folder_list.currentItem() is None:
                 return
             else:
                 self.search_path = self.folder_list.selectedItems()[0].text()
         self.search_folder_path.setText(self.search_path)
-        if os.path.isdir(self.search_path):
-            self.saved_path_to_registry()
-        self.found_files = []
-        self.found_folders = set()
-        self.found_files_short = []
-        self.found_folders_short = set()
+        self.saved_path_to_registry()
+        self.reset_data()
         if self.search_input.text().strip() :
             self.search_files(source = source)
         else:
@@ -298,6 +332,10 @@ class FileSearchHandler(FileSearch):
             self.search_logic = self.logics["OR"]
         else:
             self.search_logic = self.logics["NOT"]
+        self.logic = self.logic_hint[self.language]
+        self.logic_tooltips()
+        self.reset_data()
+        self.search_files()
     #----------------------------------------------------------------
     def change_type(self):
         if self.file_type_combo.currentIndex() == -1:
@@ -305,14 +343,8 @@ class FileSearchHandler(FileSearch):
         else:
             self.index =self.file_type_combo.currentIndex()
         self.search_type =self.ext_type[self.index]
-    #----------------------------------------------------------------
-    def open_file_dialog(self):
-        select_folder = self.label[self.language]["SelectFolder"]
-        folder_path = QFileDialog.getExistingDirectory(self, select_folder,self.search_path)
-        if folder_path:
-            self.search_path = folder_path
-            self.search_folder_path.setText(folder_path)
-            self.saved_path_to_registry()
+        self.reset_data()
+        self.search_files()
     #----------------------------------------------------------------
     def saved_path_to_registry(self):
         self.save_before_close(changed_item=2)
@@ -325,150 +357,60 @@ class FileSearchHandler(FileSearch):
             winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
         winreg.CloseKey(reg_key)
 #-----------------------------------------------------------------------
-
-#-----------------------------------------------------------------------
     def search_files(self,source =1): 
         keyword = self.search_input.text().strip()
         if keyword:
             self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip())
             for root, dirs, files in os.walk(self.search_path):
+                # Check if any file or folder name matches any part of the search pattern
                 for name in files + dirs:
-                    self.condition =any(part in name for part in self.keywords)
+                    if self.search_logic == 0: #OR
+                        self.condition =any(part in name for part in self.keywords)
+                    elif self.search_logic == 1:#AND
+                        self.condition =all(part in name for part in self.keywords)
+                    else:#NOT
+                        self.condition =not all(part in name for part in self.keywords)
                     if self.condition:
                         if os.path.isfile(os.path.join(root, name)):
                             self.found_files.append(os.path.join(root, name))
-                            self.found_folders.add(os.path.dirname(os.path.join(root, name)))
-                            if source == 1:
-                                self.found_folders.add(os.path.dirname(os.path.join(root, name)))
-                        elif os.path.isdir(os.path.join(root, name)):
-                            if source == 1:
-                                self.found_folders.add(os.path.join(root, name))
-                            # self.found_folders.add(os.path.join(root, name))
-            self.filtered_files, self.filtered_folders = self.found_files, self.found_folders
-            
-            # search_by_logic()
-            self.search_by_logic()
-            
-            
-            # for root, dirs, files in os.walk(self.search_path):
-            #     # Check if any file or folder name matches any part of the search pattern
-            #     for name in files + dirs:
-            #         if self.search_logic == 0: #OR
-            #             self.condition =any(part in name for part in self.keywords)
-            #         elif self.search_logic == 1:#AND
-            #             self.condition =all(part in name for part in self.keywords)
-            #         else:#NOT
-            #             self.condition =not all(part in name for part in self.keywords)
-            #         if self.condition:
-            #             if os.path.isfile(os.path.join(root, name)):
-            #                 self.found_files.append(os.path.join(root, name))
-            #                 self.found_folders.add(os.path.dirname(os.path.join(root, name)))
-                            
+                            self.found_folders.add(os.path.dirname(os.path.join(root, name)))             
             # Filter by file type
-            # self.search_by_type()
-            # self.index = self.file_type_combo.currentIndex()
-            # if self.index <0:
-            #     self.file_type_combo.setCurrentIndex(0)
-            # self.search_type =self.ext_type[self.index]
-            # if self.search_type or len(self.search_type)>0:
-            #     self.found_files,folders = self.filter_type()
-            #     self.found_folders = folders.intersection(self.found_folders)
-            
-            
-            # if self.found_folders:
-            #     folders = list(self.found_folders)
-            #     for folder in folders:
-            #         partial_path = folder.removeprefix(self.search_path)
-            #         if partial_path.startswith(os.path.sep):
-            #             partial_path = partial_path[1:]
-            #         self.found_folders_short.add(partial_path)
-            # if self.found_files:
-            #     for file in self.found_files:
-            #         filename = os.path.basename(file)
-            #         self.found_files_short.append(filename)                
+            if self.search_type or len(self.search_type)>0:
+                self.found_files,folders = self.filter_type()
+                self.found_folders = folders.intersection(self.found_folders)
+            self.filtered_files, self.filtered_folders = self.found_files, self.found_folders
         else:#Nothing selected 
-            # self.file_list.clear()
-            # self.folder_list.clear()
-            #         if self.condition:
-            #             if os.path.isfile(os.path.join(root, name)):
-            #                 self.found_files.append(os.path.join(root, name))
-            #                 self.found_folders.add(os.path.dirname(os.path.join(root, name)))
-            return
-        # self.show_data(source)
+            self.file_list.clear()
+            self.folder_list.clear()
+            self.reset_data()
+        self.show_data(source)
 #-----------------------------------------------------------------------
     def search_by_logic(self):
         if  self.filtered_files is None: 
             return
         else:
-            found_files = []
-            found_folders = set()
-            for file in self.filtered_files:
-                # name = os.path.basename(file)
-                if self.search_logic == 1:#AND
-                    self.condition =all(part in file for part in self.keywords)
-                elif self.search_logic ==2:#NOT
-                    self.condition =not all(part in file for part in self.keywords)
-                else:#OR
-                    self.condition =any(part in file for part in self.keywords)
-                if self.condition:
-                    if os.path.isfile(file):
-                        found_files.append(file)
-                        found_folders.add(os.path.dirname(file))
-                    elif os.path.isdir(file):
-                        found_folders.add(file)
-            self.filtered_files = found_files
-            self.filtered_folders = found_folders.intersection(self.filtered_folders)
-            self.show_data()
-                
-        # found_files = self.found_files
-        
-        #     self.found_files = []
-        #     found_folders = set()
-        #     for file in found_files:
-        #         name   = os.path.basename(file)
-        #         if self.search_logic == 1:#AND
-        #             self.condition =all(part in name for part in self.keywords)
-        #         elif self.search_logic ==2:#NOT
-        #             self.condition =not all(part in name for part in self.keywords)
-        #         else:#OR
-        #             self.condition =True
-        #         if self.condition:
-        #             if os.path.isfile(name):
-        #                 self.found_files.append(file)
-        #                 found_folders.add(os.path.dirname(file))
-        #             elif os.path.isdir(name):
-        #                 found_folders.add(name)
-        #     self.found_folders = found_folders.intersection(self.found_folders)
-        # else: return
-        
-        # for root, dirs, files in os.walk(self.search_path):
-        #     # Check if any file or folder name matches any part of the search pattern
-        #     for name in files + dirs:
-        #         if self.search_logic == 0: #OR
-        #             self.condition =any(part in name for part in self.keywords)
-        #         elif self.search_logic == 1:#AND
-        #             self.condition =all(part in name for part in self.keywords)
-        #         else:#NOT
-        #             self.condition =not all(part in name for part in self.keywords)
-        #         if self.condition:
-        #             if os.path.isfile(os.path.join(root, name)):
-        #                 self.found_files.append(os.path.join(root, name))
-        #                 self.found_folders.add(os.path.dirname(os.path.join(root, name)))
+            if self.search_logic == 0: #OR:
+                self.filtered_files = self.found_files
+                self.filtered_folders =self.found_folders
+            else:
+                for file in self.found_files:
+                    if self.search_logic == 1:#AND
+                        found_files = []
+                        found_folders = set()
+                        self.condition =all(part in file for part in self.keywords)
+                        if os.path.isfile(file):
+                            found_files.append(file)
+                            found_folders.add(os.path.dirname(file))
+                        elif os.path.isdir(file):
+                            found_folders.add(file)
+                        self.filtered_files = found_files
+                        self.filtered_folders = found_folders #.intersection(self.filtered_folders)
+                    elif self.search_logic ==2:#NOT
+                        set_files = set(self.filtered_files)
+                        self.filtered_files = [item for item in self.found_files if item not in set_files]
+        self.show_data()
 #-----------------------------------------------------------------------
-    def search_by_type(self):
-        self.index = self.file_type_combo.currentIndex()
-        if self.index <0:
-            self.file_type_combo.setCurrentIndex(0)
-        self.search_type =self.ext_type[self.index]
-        if self.search_type or len(self.search_type)>0:
-            
-            
-            self.found_files,folders = self.filter_type()
-            self.found_folders = folders.intersection(self.found_folders)
-        
-        
-        
-        
+    def filter_type(self):
         filtered_files = []
         filtered_folders =  set()
         if self.search_type or len(self.search_type)>0:
@@ -480,55 +422,35 @@ class FileSearchHandler(FileSearch):
                         partial_path = partial_path[1:]
                         dirname = dirname[1:]
                     filtered_folders.add(dirname)
-            self.found_files = filtered_files
-            self.found_folders = filtered_folders
-            return filtered_files, filtered_folders
-    
-    def filter_type(self):
-        pass
-        # filtered_files = []
-        # filtered_folders =  set()
-        # if self.search_type or len(self.search_type)>0:
-        #     for file in self.found_files:
-        #         if any(file.lower().endswith(ext) for ext in self.search_type):
-        #             filtered_files.append(file)
-        #             dirname= os.path.dirname(file)
-        #             if dirname.startswith(os.path.sep):
-        #                 partial_path = partial_path[1:]
-        #                 dirname = dirname[1:]
-        #             filtered_folders.add(dirname)
-        #     self.found_files = filtered_files
-        #     self.found_folders = filtered_folders
-        #     return filtered_files, filtered_folders
+        return filtered_files, filtered_folders
     #-----------------------------------------------------------------------
     def show_data(self,source=1):
+        self.file_list.clear()
+        self.folder_list.clear()
         if source == 1:
-            self.file_list.clear()
-            self.folder_list.clear()
-            if self.filtered_folders:
-                folders = list(self.filtered_folders)
+            if self.found_folders:
+                folders = list(self.found_folders)
                 for folder in folders:
                     partial_path = folder.removeprefix(self.search_path)
                     if partial_path.startswith(os.path.sep):
                         partial_path = partial_path[1:]
-                    self.filtered_folders_short.add(partial_path)    
-            if self.filtered_files:
-                for file in self.filtered_files:
+                    self.found_folders_short.add(partial_path)    
+            if self.found_files:
+                for file in self.found_files:
                     filename = os.path.basename(file)
-                    self.filtered_files_short.append(filename)    
+                    self.found_files_short.append(filename)    
         else:
-            self.file_list.clear()  
-            if self.filtered_files:
-                for file in self.filtered_files:
+            if self.found_files:
+                for file in self.found_files:
                     filename = os.path.basename(file)
                     self.found_files_short.append(filename)
         #----------------------------------------------------------------------
-        if len(self.filtered_files)>0:
-            for file in self.filtered_files_short:
+        if len(self.found_files)>0:
+            for file in self.found_files_short:
                 self.file_list.addItem(file)
         self.file_label.setText(self.label[self.language]["Files:"]+" "+ str(self.file_list.count()))
-        if len(self.filtered_folders)>0:
-            for folder in self.filtered_folders_short:
+        if len(self.found_folders)>0:
+            for folder in self.found_folders_short:
                 self.folder_list.addItem(folder)
         self.folder_label.setText(self.label[self.language]["Folders:"]+" "+ str(self.folder_list.count()))
 #-----------------------------------------------------------------------   
@@ -536,7 +458,7 @@ class FileSearchHandler(FileSearch):
         self.info.setTextInteractionFlags(self.info.textInteractionFlags() | Qt.TextSelectableByMouse)
         fm = QFontMetrics(self.info.font())
         if current:
-            short_path =fm.elidedText(self.filtered_files[self.file_list.row(current)],Qt.ElideMiddle,400)
+            short_path =fm.elidedText(self.found_files[self.file_list.row(current)],Qt.ElideMiddle,400)
             self.info.setText(short_path)
         else:
             self.info.setText("")
@@ -547,7 +469,7 @@ class FileSearchHandler(FileSearch):
         try:
             # --- use one unified method ---
             if sys.platform.startswith("win"):
-                os.startfile(filepath)
+                QDesktopServices.openUrl(QUrl.fromLocalFile(filepath))
             elif sys.platform.startswith("darwin"):
                 subprocess.run(["open", filepath])
             else:  # Linux and others

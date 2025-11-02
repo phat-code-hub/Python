@@ -2,9 +2,17 @@
     "python-envs.defaultEnvManager": "ms-python.python:system",
     "python-envs.pythonProjects": [],
     "cSpell.words": [
+        "Chọn",
+        "hoặc",
+        "khóa",
+        "Không",
+        "Kiểu",
         "lightpink",
+        "Nhật",
         "startfile",
-        "UEDA"
+        "trắng",
+        "UEDA",
+        "Việt"
     ],
     "aiCodePro.preferredModels": [
     "codellama:7b",

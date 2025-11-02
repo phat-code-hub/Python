@@ -225,8 +225,6 @@ class FileSearchHandler(FileSearch):
         self.search_folder_path.setText(self.search_path)
         self.search_type = self.ext_type[self.type_index]
         self.reset_data()
-        self.keywords = ""
-        self.condition = None
         self.connect_signals()
         self.change_logic()
         self.change_tooltips()
@@ -315,6 +313,8 @@ class FileSearchHandler(FileSearch):
         self.change_type()
     #----------------------------------------------------------------
     def reset_data(self):
+        self.keywords = ""
+        self.condition = None
         self.found_files = []
         self.found_folders = set()
         self.found_files_short = []

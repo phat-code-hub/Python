@@ -21,5 +21,16 @@
     "mistral:7b",
     ],
     "aiCodePro.localLLMEndpoint": "http://localhost:11434",
-    "aiCodePro.defaultPersonality": "buzzy"
+    "aiCodePro.defaultPersonality": "buzzy",
+    "terminal.integrated.automationProfile.windows": {},
+    "terminal.integrated.profiles.windows": {
+
+        "PowerShell": {
+            "source": "PowerShell",
+            "icon": "terminal-powershell"
+        },
+        "Git Bash": {
+            "source": "Git Bash"
+        }
+    }
 }

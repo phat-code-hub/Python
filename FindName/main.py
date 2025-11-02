@@ -37,6 +37,9 @@ class FileSearch(QWidget):
                                 1: "Tất cả đều tìm thấy , không cần thứ tự",
                                 2: "Không chứa tất cả các từ khóa này"}}
         self.type_hint = {"English":"Select file type","Japanese":"ファイルタイプを選択","Vietnamese":"Chọn loại tập tin"}
+        self.folder_hint = {"English":"Double Click to change search folder",
+                            "Japanese":"ダブルクリックしてフォルダを選択、再検索",
+                            "Vietnamese":"Click đúp để chọn đường dẫn tìm kiếm, tìm kiếm lại"}
         self.label ={"English": {
                         "Title": "File Search",
                         "Search Path:":"Search Path:","Search keyword:":"Search keyword:",
@@ -252,6 +255,7 @@ class FileSearchHandler(FileSearch):
     def change_tooltips(self,item =0):
         self.search_folder_change.setToolTip(self.open_dialog_hint[self.language])
         self.file_type_combo.setToolTip(self.type_hint[self.language])
+        self.folder_list.setToolTip(self.folder_hint[self.language])
         if item == 0 or item == 1: #Search Input
             self.search_input.setToolTip(self.search_hint[self.language])
         elif item == 0 or item == 2:#Logic
@@ -259,18 +263,6 @@ class FileSearchHandler(FileSearch):
             self.or_radio.setToolTip(logic[0])
             self.and_radio.setToolTip(logic[1])
             self.not_radio.setToolTip(logic[2])
-        elif item == 0 or item == 3:#Type
-            pass
-        elif item == 0 or item == 4:#Folder
-            pass
-        elif item == 0 or item == 5:#File
-            pass
-
-    #----------------------------------------------------------------
-    def logic_tooltips(self):
-        self.or_radio.setToolTip(self.logic[0])
-        self.and_radio.setToolTip(self.logic[1])
-        self.not_radio.setToolTip(self.logic[2])
     #----------------------------------------------------------------
     def open_file_dialog(self):
         select_folder = self.label[self.language]["SelectFolder"]
@@ -328,7 +320,6 @@ class FileSearchHandler(FileSearch):
                 self.search_path = self.folder_list.selectedItems()[0].text()
         self.search_folder_path.setText(self.search_path)
         self.saved_path_to_registry()
-        self.reset_data()
         if self.search_input.text().strip() :
             self.search_files(source = source)
         else:
@@ -342,7 +333,6 @@ class FileSearchHandler(FileSearch):
         else:
             self.logic_index = self.logics["NOT"]
         self.change_tooltips(2)
-        self.reset_data()
         self.search_files()
     #----------------------------------------------------------------
     def change_type(self):
@@ -351,7 +341,6 @@ class FileSearchHandler(FileSearch):
         else:
             self.type_index =self.file_type_combo.currentIndex()
         self.search_type =self.ext_type[self.type_index]
-        self.reset_data()
         self.search_files()
     #----------------------------------------------------------------
     def saved_path_to_registry(self):
@@ -365,7 +354,8 @@ class FileSearchHandler(FileSearch):
             winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
         winreg.CloseKey(reg_key)
 #-----------------------------------------------------------------------
-    def search_files(self,source =1): 
+    def search_files(self,source =1):
+        self.reset_data()
         keyword = self.search_input.text().strip()
         if keyword:
             self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip().lower())
@@ -390,7 +380,6 @@ class FileSearchHandler(FileSearch):
         else:#Nothing selected 
             self.file_list.clear()
             self.folder_list.clear()
-            self.reset_data()
         self.show_data(source)
 #-----------------------------------------------------------------------
     def search_by_logic(self):

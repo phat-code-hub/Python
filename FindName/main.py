@@ -22,6 +22,7 @@ class FileSearch(QWidget):
         self.search={"English":{"AND":"All","OR":"Contain","NOT"  :"Not contain"},"Japanese":{"AND":"全て","OR":"いずれか","NOT"  :"いずれか除外"},
                 "Vietnamese":{"AND":"Tất cả","OR":"Bao hàm","NOT"  :"Không bao hàm"}}
         self.place_holder={"English":"Input search keywords","Japanese":"検索キーワードを入力","Vietnamese":"Nhập từ khóa tìm kiếm"}
+        self.open_dialog_hint={"English":"Click to change search folder","Japanese":"クリックして検索フォルダを変更","Vietnamese":"Click để thay đổi đường dẫn tìm kiếm"}
         self.search_hint={"English":"Multiple keywords are separated by ',:;' or spaces",
                         "Japanese":"複数のキーワードは英字、数字、記号とし',:;'または空白で区切って入力",
                         "Vietnamese":"Các từ khóa cách nhau bởi ',:;' hoặc khoảng trắng"}
@@ -35,6 +36,7 @@ class FileSearch(QWidget):
                         "Vietnamese":{0: "Có ít nhất một từ khóa ",
                                 1: "Tất cả đều tìm thấy , không cần thứ tự",
                                 2: "Không chứa tất cả các từ khóa này"}}
+        self.type_hint = {"English":"Select file type","Japanese":"ファイルタイプを選択","Vietnamese":"Chọn loại tập tin"}
         self.label ={"English": {
                         "Title": "File Search",
                         "Search Path:":"Search Path:","Search keyword:":"Search keyword:",
@@ -92,8 +94,7 @@ class FileSearch(QWidget):
             "AND":1,
             "NOT":2
         }
-        self.index =0 # For ALL file type
-        self.search_logic = self.logics["OR"]
+        
 #------------------------------------------------------------------------------------------------------------------     
     def initUI(self):
         self.default_Values()
@@ -123,7 +124,7 @@ class FileSearch(QWidget):
         # self.search_folder_path.setStyleSheet("color: dark_blue; font-style: italic;text-align: left;")
         self.search_folder_change = QPushButton("...")
         self.search_folder_change.setFixedSize(30, 20)  # Set the size of the button
-        self.search_folder_change.setStyleSheet("background-color: lightpink;")  # Set the background color
+        # self.search_folder_change.setStyleSheet("background-color: lightpink;")  # Set the background color
         search_folder_layout.addWidget(self.search_folder_label)
         search_folder_layout.addWidget(self.search_folder_path)
         search_folder_layout.addWidget(self.search_folder_change)
@@ -207,27 +208,28 @@ class FileSearch(QWidget):
 class FileSearchHandler(FileSearch):
     def __init__(self):
         super().__init__()
+        # Set default values
+        self.logic_index = self.logics["OR"] # 0 for OR, 1 for AND, 2 for NOT
+        self.type_index =0 # For ALL file type
+        #Control default values
         if self.language == 'English':
             self.english_radio.setChecked(True)
         elif self.language == 'Japanese':
             self.japanese_radio.setChecked(True)
         else:
             self.vietnamese_radio.setChecked(True)  
-        self.search_radio.button(self.search_logic).setChecked(True)
-        self.logic = self.logic_hint[self.language]
-        #Set  default values
-        self.file_type_combo.setCurrentIndex(self.index)
+
+        self.search_radio.button(self.logic_index).setChecked(True)
+        self.file_type_combo.setCurrentIndex(self.type_index)        
+        #initialize values
+        self.search_folder_path.setText(self.search_path)
+        self.search_type = self.ext_type[self.type_index]
+        self.reset_data()
         self.keywords = ""
         self.condition = None
-        self.search_type = self.ext_type[self.index]
-        self.reset_data()
-        self.index = 0
-        self.source = 1
         self.connect_signals()
         self.change_logic()
-        self.search_tooltips()
-        self.file_tooltip()
-        self.folder_tooltip()
+        self.change_tooltips()
     #----------------------------------------------------------------
     def connect_signals(self):
         #Change language
@@ -249,14 +251,23 @@ class FileSearchHandler(FileSearch):
         self.file_list.currentItemChanged.connect(self.show_file_info)
         self.file_list.itemDoubleClicked.connect(self.open_file_location)
     #----------------------------------------------------------------
-    def folder_tooltip(self):
-        pass
-    #----------------------------------------------------------------
-    def file_tooltip(self):
-        pass
-    #----------------------------------------------------------------
-    def search_tooltips(self):
-        self.search_input.setToolTip(self.search_hint[self.language])
+    def change_tooltips(self,item =0):
+        self.search_folder_change.setToolTip(self.open_dialog_hint[self.language])
+        self.file_type_combo.setToolTip(self.type_hint[self.language])
+        if item == 0 or item == 1: #Search Input
+            self.search_input.setToolTip(self.search_hint[self.language])
+        elif item == 0 or item == 2:#Logic
+            logic = self.logic_hint[self.language] 
+            self.or_radio.setToolTip(logic[0])
+            self.and_radio.setToolTip(logic[1])
+            self.not_radio.setToolTip(logic[2])
+        elif item == 0 or item == 3:#Type
+            pass
+        elif item == 0 or item == 4:#Folder
+            pass
+        elif item == 0 or item == 5:#File
+            pass
+
     #----------------------------------------------------------------
     def logic_tooltips(self):
         self.or_radio.setToolTip(self.logic[0])
@@ -281,9 +292,6 @@ class FileSearchHandler(FileSearch):
             self.language = 'Vietnamese'
         #Update changed language to registry
         self.save_before_close(changed_item=1)
-        self.search_tooltips()
-        self.logic_tooltips()
-        self.change_logic()
         #Set the labels and combo box items based on the selected language
         self.setWindowTitle(labels[self.language]["Title"])
         self.english_radio.setText(langs[self.language]["ENG"])  
@@ -302,7 +310,8 @@ class FileSearchHandler(FileSearch):
         self.file_type_combo.clear()
         for _ in range(len(self.type)):
             self.file_type_combo.addItem(types[_][self.language])
-        self.file_type_combo.setCurrentIndex(0)
+        self.change_tooltips(1)
+        self.change_logic()
         self.change_type()
     #----------------------------------------------------------------
     def reset_data(self):
@@ -327,22 +336,21 @@ class FileSearchHandler(FileSearch):
     #----------------------------------------------------------------
     def change_logic(self):
         if self.and_radio.isChecked():
-            self.search_logic = self.logics["AND"]
+            self.logic_index = self.logics["AND"]
         elif self.or_radio.isChecked():
-            self.search_logic = self.logics["OR"]
+            self.logic_index = self.logics["OR"]
         else:
-            self.search_logic = self.logics["NOT"]
-        self.logic = self.logic_hint[self.language]
-        self.logic_tooltips()
+            self.logic_index = self.logics["NOT"]
+        self.change_tooltips(2)
         self.reset_data()
         self.search_files()
     #----------------------------------------------------------------
     def change_type(self):
         if self.file_type_combo.currentIndex() == -1:
-            self.index =0
+            self.type_index =0
         else:
-            self.index =self.file_type_combo.currentIndex()
-        self.search_type =self.ext_type[self.index]
+            self.type_index =self.file_type_combo.currentIndex()
+        self.search_type =self.ext_type[self.type_index]
         self.reset_data()
         self.search_files()
     #----------------------------------------------------------------
@@ -364,9 +372,9 @@ class FileSearchHandler(FileSearch):
             for root, dirs, files in os.walk(self.search_path):
                 # Check if any file or folder name matches any part of the search pattern
                 for name in files + dirs:
-                    if self.search_logic == 0: #OR
+                    if self.logic_index == 0: #OR
                         self.condition =any(part in name.lower() for part in self.keywords)
-                    elif self.search_logic == 1:#AND
+                    elif self.logic_index == 1:#AND
                         self.condition =all(part in name.lower() for part in self.keywords)
                     else:#NOT
                         self.condition =not all(part in name.lower() for part in self.keywords)
@@ -389,12 +397,12 @@ class FileSearchHandler(FileSearch):
         if  self.filtered_files is None: 
             return
         else:
-            if self.search_logic == 0: #OR:
+            if self.logic_index == 0: #OR:
                 self.filtered_files = self.found_files
                 self.filtered_folders =self.found_folders
             else:
                 for file in self.found_files:
-                    if self.search_logic == 1:#AND
+                    if self.logic_index == 1:#AND
                         found_files = []
                         found_folders = set()
                         self.condition =all(part in file for part in self.keywords)
@@ -405,7 +413,7 @@ class FileSearchHandler(FileSearch):
                             found_folders.add(file)
                         self.filtered_files = found_files
                         self.filtered_folders = found_folders #.intersection(self.filtered_folders)
-                    elif self.search_logic ==2:#NOT
+                    elif self.logic_index ==2:#NOT
                         set_files = set(self.filtered_files)
                         self.filtered_files = [item for item in self.found_files if item not in set_files]
         self.show_data()

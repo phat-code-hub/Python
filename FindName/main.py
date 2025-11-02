@@ -40,6 +40,9 @@ class FileSearch(QWidget):
         self.folder_hint = {"English":"Double Click to change search folder",
                             "Japanese":"ダブルクリックしてフォルダを選択、再検索",
                             "Vietnamese":"Click đúp để chọn đường dẫn tìm kiếm, tìm kiếm lại"}
+        self.file_hint = {"English":"Double Click to go file location",
+                            "Japanese":"ダブルクリックしてファイルの場所を開く",
+                            "Vietnamese":"Click đúp để đi tới vị trí tập tin"}
         self.label ={"English": {
                         "Title": "File Search",
                         "Search Path:":"Search Path:","Search keyword:":"Search keyword:",
@@ -256,6 +259,7 @@ class FileSearchHandler(FileSearch):
         self.search_folder_change.setToolTip(self.open_dialog_hint[self.language])
         self.file_type_combo.setToolTip(self.type_hint[self.language])
         self.folder_list.setToolTip(self.folder_hint[self.language])
+        self.file_list.setToolTip(self.file_hint[self.language])
         if item == 0 or item == 1: #Search Input
             self.search_input.setToolTip(self.search_hint[self.language])
         elif item == 0 or item == 2:#Logic
@@ -317,7 +321,7 @@ class FileSearchHandler(FileSearch):
             if self.folder_list.currentItem() is None:
                 return
             else:
-                self.search_path = self.folder_list.selectedItems()[0].text()
+                self.search_path = os.path.join(self.search_path,self.folder_list.selectedItems()[0].text())
         self.search_folder_path.setText(self.search_path)
         self.saved_path_to_registry()
         if self.search_input.text().strip() :

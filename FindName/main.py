@@ -360,16 +360,16 @@ class FileSearchHandler(FileSearch):
     def search_files(self,source =1): 
         keyword = self.search_input.text().strip()
         if keyword:
-            self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip())
+            self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip().lower())
             for root, dirs, files in os.walk(self.search_path):
                 # Check if any file or folder name matches any part of the search pattern
                 for name in files + dirs:
                     if self.search_logic == 0: #OR
-                        self.condition =any(part in name for part in self.keywords)
+                        self.condition =any(part in name.lower() for part in self.keywords)
                     elif self.search_logic == 1:#AND
-                        self.condition =all(part in name for part in self.keywords)
+                        self.condition =all(part in name.lower() for part in self.keywords)
                     else:#NOT
-                        self.condition =not all(part in name for part in self.keywords)
+                        self.condition =not all(part in name.lower() for part in self.keywords)
                     if self.condition:
                         if os.path.isfile(os.path.join(root, name)):
                             self.found_files.append(os.path.join(root, name))

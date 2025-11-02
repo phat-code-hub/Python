@@ -249,7 +249,6 @@ class FileSearchHandler(FileSearch):
         #Search logic
         self.search_radio.buttonClicked.connect(self.change_logic)
         #CLick self.Folder_list
-        # self.folder_list.currentItemChanged.connect(lambda : self.change_search_source(source=2))
         self.folder_list.itemDoubleClicked.connect(lambda : self.change_search_source(source=2))
         #Show file info
         self.file_list.currentItemChanged.connect(self.show_file_info)

@@ -459,15 +459,18 @@ class FileSearchHandler(FileSearch):
         fm = QFontMetrics(self.info.font())
         if current:
             selected_index = self.file_list.row(current)
-            selected_file = self.found_files[selected_index]
-            selected_file_path = os.path.dirname(selected_file)
-            selected_file_name = os.path.basename(selected_file)
-            short_path = fm.elidedText(selected_file_name, Qt.ElideMiddle, 400)
+            # selected_file = self.found_files[selected_index]
+            selected_file_path = os.path.dirname(self.found_files[selected_index])
+            # selected_file_name = os.path.basename(self.found_files[selected_index])
+            # short_path = fm.elidedText(self.found_files[selected_index], Qt.ElideMiddle, 400)
+            short_path = fm.elidedText(self.found_files[selected_index], Qt.ElideMiddle, 400)
             self.info.setText(short_path)
+            foundFolder =  list(self.found_folders)
             # Select the folder where the current selected file is in
-            self.folder_list.setCurrentItem(self.folder_list.findText(selected_file_path))
-            # short_path =fm.elidedText(self.found_files[self.file_list.row(current)],Qt.ElideMiddle,400)
-            # self.info.setText(short_path)
+            found_index = list(filter(lambda i: foundFolder[i] in selected_file_path, range(len(self.found_folders))))
+            # self.folder_list.setCurrentItem(self.folder_list.findText(selected_file_path))
+            if found_index:
+                self.folder_list.setCurrentRow(found_index[0])
         else:
             self.info.setText("")
 #-----------------------------------------------------------------------   

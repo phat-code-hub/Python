@@ -458,8 +458,16 @@ class FileSearchHandler(FileSearch):
         self.info.setTextInteractionFlags(self.info.textInteractionFlags() | Qt.TextSelectableByMouse)
         fm = QFontMetrics(self.info.font())
         if current:
-            short_path =fm.elidedText(self.found_files[self.file_list.row(current)],Qt.ElideMiddle,400)
+            selected_index = self.file_list.row(current)
+            selected_file = self.found_files[selected_index]
+            selected_file_path = os.path.dirname(selected_file)
+            selected_file_name = os.path.basename(selected_file)
+            short_path = fm.elidedText(selected_file_name, Qt.ElideMiddle, 400)
             self.info.setText(short_path)
+            # Select the folder where the current selected file is in
+            self.folder_list.setCurrentItem(self.folder_list.findText(selected_file_path))
+            # short_path =fm.elidedText(self.found_files[self.file_list.row(current)],Qt.ElideMiddle,400)
+            # self.info.setText(short_path)
         else:
             self.info.setText("")
 #-----------------------------------------------------------------------   
@@ -474,6 +482,7 @@ class FileSearchHandler(FileSearch):
                 subprocess.run(["open", filepath])
             else:  # Linux and others
                 subprocess.run(["xdg-open", filepath])
+            
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to open folder:\n{e}")
 

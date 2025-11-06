@@ -465,7 +465,7 @@ class FileSearchHandler(FileSearch):
             # short_path = fm.elidedText(self.found_files[selected_index], Qt.ElideMiddle, 400)
             short_path = fm.elidedText(self.found_files[selected_index], Qt.ElideMiddle, 400)
             self.info.setText(short_path)
-            foundFolder =  list(self.folder_list.itemText(i) for i in range(self.folder_list.count()))
+            foundFolder =  list(self.folder_list.item(i).text() for i in range(self.folder_list.count()))
             # Select the folder where the current selected file is in
             found_index = list(filter(lambda i: foundFolder[i] in selected_file_path, range(len(self.found_folders))))
             # self.folder_list.setCurrentItem(self.folder_list.findText(selected_file_path))

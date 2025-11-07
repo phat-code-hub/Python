@@ -8,6 +8,7 @@
         "Không",
         "Kiểu",
         "lightpink",
+        "loại",
         "nhất",
         "Nhật",
         "startfile",
@@ -35,5 +36,9 @@
             "source": "Git Bash"
         }
     },
+    "auto-rename-tag.activationOnLanguage": [
+        
+        "*"
+    ],
  
 }

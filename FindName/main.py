@@ -36,7 +36,7 @@ class FileSearch(QWidget):
                         "Vietnamese":{0: "Có ít nhất một từ khóa ",
                                 1: "Tất cả đều tìm thấy , không cần thứ tự",
                                 2: "Không chứa tất cả các từ khóa này"}}
-        self.type_hint = {"English":"Select file type","Japanese":"ファイルタイプを選択","Vietnamese":"Chọn loại tập tin"}
+        self.type_hint = {"English":"Select file type","Japanese":"ファイルタイプを選択","Vietnamese":"Chọn Lodi tập tin"}
         self.folder_hint = {"English":"Double Click to change search folder",
                             "Japanese":"ダブルクリックしてフォルダを選択、再検索",
                             "Vietnamese":"Click đúp để chọn đường dẫn tìm kiếm, tìm kiếm lại"}
@@ -127,10 +127,10 @@ class FileSearch(QWidget):
         self.search_folder_label = QLabel(self.label[self.language]["Search Path:"])
         self.search_folder_path = QLabel()
         self.search_folder_path.setText(self.search_path)
-        # self.search_folder_path.setStyleSheet("color: dark_blue; font-style: italic;text-align: left;")
+        self.search_folder_path.setStyleSheet("color: dark_blue; font-style: italic;text-align: left;")
         self.search_folder_change = QPushButton("...")
-        self.search_folder_change.setFixedSize(30, 20)  # Set the size of the button
-        # self.search_folder_change.setStyleSheet("background-color: lightpink;")  # Set the background color
+        self.search_folder_change.setFixedSize(50,30)  # Set the size of the button
+        self.search_folder_change.setStyleSheet("background-color: lightpink;")  # Set the background color
         search_folder_layout.addWidget(self.search_folder_label)
         search_folder_layout.addWidget(self.search_folder_path)
         search_folder_layout.addWidget(self.search_folder_change)
@@ -203,13 +203,19 @@ class FileSearch(QWidget):
         self.setLayout(layout)
     #---------------------------------------------------------------------------
     def get_default_values(self):
-        try:
-            reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\FileSearchApp")
-            language,default_path= winreg.QueryValueEx(reg_key, "Language"), winreg.QueryValueEx(reg_key, "SearchPath")
-            winreg.CloseKey(reg_key)
-            return language[0],default_path[0]
-        except FileNotFoundError:
-            return  "English",os.path.expanduser("~")
+        import sys
+        if sys.platform == "win32":
+            # Windows: use winreg
+            try:
+                reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\FileSearchApp")
+                language,default_path= winreg.QueryValueEx(reg_key, "Language"), winreg.QueryValueEx(reg_key, "SearchPath")
+                winreg.CloseKey(reg_key)
+                return language[0],default_path[0]
+            except FileNotFoundError:
+                return  "English",os.path.expanduser("~")
+        elif sys.platform == "darwin":
+            # macOS: use NSUserDefaults
+            pass
 #-----------------------------------------------------------------------
 class FileSearchHandler(FileSearch):
     def __init__(self):
@@ -350,12 +356,18 @@ class FileSearchHandler(FileSearch):
         self.save_before_close(changed_item=2)
     #----------------------------------------------------------------
     def save_before_close(self,changed_item=0):
-        reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\FileSearchApp")
-        if changed_item != 2: #Language changed
-            winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ, self.language)
-        if changed_item != 1: #Search Path changed
-            winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
-        winreg.CloseKey(reg_key)
+        import sys
+        if sys.platform == "win32":
+            # Windows: use winreg
+            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\FileSearchApp")
+            if changed_item != 2: #Language changed
+                winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ, self.language)
+            if changed_item != 1: #Search Path changed
+                winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
+            winreg.CloseKey(reg_key)
+        elif sys.platform == "darwin":
+            # macOS: use NSUserDefaults
+            pass
 #-----------------------------------------------------------------------
     def search_files(self,source =1):
         self.reset_data()
@@ -458,19 +470,14 @@ class FileSearchHandler(FileSearch):
         self.info.setTextInteractionFlags(self.info.textInteractionFlags() | Qt.TextSelectableByMouse)
         fm = QFontMetrics(self.info.font())
         if current:
-            selected_index = self.file_list.row(current)
-            # selected_file = self.found_files[selected_index]
-            selected_file_path = os.path.dirname(self.found_files[selected_index])
-            # selected_file_name = os.path.basename(self.found_files[selected_index])
-            # short_path = fm.elidedText(self.found_files[selected_index], Qt.ElideMiddle, 400)
-            short_path = fm.elidedText(self.found_files[selected_index], Qt.ElideMiddle, 400)
+            file_index = self.file_list.currentRow()
+            file_path = os.path.dirname(self.found_files[file_index]).lower()
+            file_path = file_path.removeprefix(self.search_path).removeprefix(os.path.sep)
+            foundFolders =[i.text().lower() for i in self.folder_list.findItems("",Qt.MatchContains)]
+            index = list(filter(lambda i:foundFolders[i] in file_path,range(len(foundFolders))))
+            self.folder_list.setCurrentRow(index[0] if index else None)
+            short_path =fm.elidedText(self.found_files[self.file_list.row(current)],Qt.ElideMiddle,600)
             self.info.setText(short_path)
-            foundFolder =  list(self.folder_list.item(i).text() for i in range(self.folder_list.count()))
-            # Select the folder where the current selected file is in
-            found_index = list(filter(lambda i: foundFolder[i] in selected_file_path, range(len(self.found_folders))))
-            # self.folder_list.setCurrentItem(self.folder_list.findText(selected_file_path))
-            if found_index:
-                self.folder_list.setCurrentRow(found_index[0])
         else:
             self.info.setText("")
 #-----------------------------------------------------------------------   
@@ -485,7 +492,6 @@ class FileSearchHandler(FileSearch):
                 subprocess.run(["open", filepath])
             else:  # Linux and others
                 subprocess.run(["xdg-open", filepath])
-            
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to open folder:\n{e}")
 
@@ -496,3 +502,69 @@ if __name__ == "__main__":
     form = FileSearchHandler()
     form.show()
     sys.exit(app.exec())
+    
+    
+    
+# Now we want 2 things: ( in WIN was OK  , now we do for MAC IOS)
+# 1) When open the app : to read 2 info: "Language" and "Search Folder" to use 
+# 2) Store these above 2 variables to memory for use later after starting again
+ 
+# now, these 2 variables are "self.language" and "self.search_path"
+
+# def __init__(self):
+#     # Load default values from the registry on macOS
+#     self.load_default_values()
+
+#     # Use the loaded values
+#     print(f"Language: {self.language}")
+#     print(f"Search Folder: {self.search_path}")
+
+#----------------
+# def update_language(self, language):
+#     # Update the language value in the registry on macOS
+#     self.language = language
+#     self.save_path_to_registry()
+
+# def update_search_path(self, search_path):
+#     # Update the search path value in the registry on macOS
+#     self.search_path = search_path
+#     self.save_path_to_registry()
+
+#---------------------
+
+
+# import plistlib
+# import os
+
+# def get_default_values():
+#     # Read default values from the registry on macOS
+#     default_values = {}
+#     registry_path = os.path.expanduser("~/Library/Preferences/com.example.app")
+#     if os.path.exists(registry_path):
+#         registry_file = os.path.join(registry_path, "com.example.app.plist")
+#         if os.path.exists(registry_file):
+#             with open(registry_file, "rb") as f:
+#                 plist = plistlib.load(f)
+#                 default_values = dict(plist)
+
+#     return default_values
+
+# def save_path_to_registry(path):
+#     # Save the path to the registry on macOS
+#     registry_path = os.path.expanduser("~/Library/Preferences/com.example.app")
+#     if not os.path.exists(registry_path):
+#         os.makedirs(registry_path)
+#     registry_file = os.path.join(registry_path, "com.example.app.plist")
+#     default_values = get_default_values()
+#     default_values["Language"] = self.language
+#     default_values["Search Folder"] = self.search_path
+#     with open(registry_file, "wb") as f:
+#         plistlib.dump(default_values, f)
+
+# def load_default_values():
+#     # Load default values from the registry on macOS
+#     default_values = get_default_values()
+#     if "Language" in default_values:
+#         self.language = default_values["Language"]
+#     if "Search Folder" in default_values:
+#         self.search_path = default_values["Search Folder"]

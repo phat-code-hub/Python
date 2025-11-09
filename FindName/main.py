@@ -6,7 +6,6 @@ from PySide6.QtGui import *
 import re
 import sys
 import os
-# import winreg
 #-----------------------------------------------------------------------
 
     
@@ -50,6 +49,8 @@ class FileSearch(QWidget):
                         "SearchButton":"Search",
                         "SelectFolder":"Select Folder",
                         "Info":"File Information:",
+                        "message":"Searching, please wait...",
+                        "finish":"Search finished!"
                         },
             "Japanese":{
                         "Title": "ファイル検索",
@@ -58,6 +59,8 @@ class FileSearch(QWidget):
                         "SearchButton":"検索",
                         "SelectFolder":"フォルダを選択",
                         "Info":"ファイル情報:",
+                        "message":"検索中、お待ちください...",
+                        "finish":"検索完了!"
                         },
             "Vietnamese":{
                         "Title": "Tìm kiếm tập tin",
@@ -65,7 +68,9 @@ class FileSearch(QWidget):
                         "File Type:":"Kiểu tập tin:","Folders:":"Thư mục:","Files:":"Tập tin   :",
                         "SearchButton":"Tìm kiếm",
                         "SelectFolder":"Chọn thư mục",
-                        "Info":"Chi tiết tập tin:", 
+                        "Info":"Chi tiết tập tin:",
+                        "message":"Đang tìm, vui lòng đợi...",
+                        "finish":"Hoàn Thành tìm kiếm!"
                         }
             }
         self.type ={
@@ -331,6 +336,7 @@ class FileSearchHandler(FileSearch):
         self.search_folder_path.setText(self.search_path)
         self.saved_path_to_registry()
         if self.search_input.text().strip() :
+            self.info.setText(self.label[self.language]["message"])
             self.search_files(source = source)
         else:
             self.show_data()
@@ -374,7 +380,7 @@ class FileSearchHandler(FileSearch):
     def search_files(self,source =1):
         self.reset_data()
         keyword = self.search_input.text().strip()
-        self.info.setText("Searching, please wait...")
+        self.info.setText(self.label[self.language]["message"])
         if keyword:
             self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip().lower())
             for root, dirs, files in os.walk(self.search_path):
@@ -401,7 +407,6 @@ class FileSearchHandler(FileSearch):
         self.show_data(source)
 #-----------------------------------------------------------------------
     def search_by_logic(self):
-        self.info.setText("Searching, please wait...")
         if  self.filtered_files is None: 
             return
         else:
@@ -427,7 +432,6 @@ class FileSearchHandler(FileSearch):
         self.show_data()
 #-----------------------------------------------------------------------
     def filter_type(self):
-        self.info.setText("Searching, please wait...")
         filtered_files = []
         filtered_folders =  set()
         if self.search_type or len(self.search_type)>0:
@@ -442,10 +446,13 @@ class FileSearchHandler(FileSearch):
         return filtered_files, filtered_folders
     #-----------------------------------------------------------------------
     def show_data(self,source=1):
-        self.info.setText("Finished searching!")
         self.file_list.clear()
         self.folder_list.clear()
         if source == 1:
+            if self.found_folders or self.found_files:
+                self.info.setText(self.label[self.language]["finish"])
+            else:
+                self.info.setText("")
             if self.found_folders:
                 folders = list(self.found_folders)
                 for folder in folders:

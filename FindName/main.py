@@ -6,7 +6,7 @@ from PySide6.QtGui import *
 import re
 import sys
 import os
-import winreg
+# import winreg
 #-----------------------------------------------------------------------
 
     
@@ -205,6 +205,7 @@ class FileSearch(QWidget):
     def get_default_values(self):
         import sys
         if sys.platform == "win32":
+            import winreg
             # Windows: use winreg
             try:
                 reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\FileSearchApp")

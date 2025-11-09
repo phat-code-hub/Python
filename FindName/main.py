@@ -127,7 +127,7 @@ class FileSearch(QWidget):
         self.search_folder_label = QLabel(self.label[self.language]["Search Path:"])
         self.search_folder_path = QLabel()
         self.search_folder_path.setText(self.search_path)
-        self.search_folder_path.setStyleSheet("color: dark_blue; font-style: italic;text-align: left;")
+        # self.search_folder_path.setStyleSheet("color: dark_blue; font-style: italic;text-align: left;")
         self.search_folder_change = QPushButton("...")
         self.search_folder_change.setFixedSize(50,30)  # Set the size of the button
         self.search_folder_change.setStyleSheet("background-color: lightpink;")  # Set the background color
@@ -360,12 +360,13 @@ class FileSearchHandler(FileSearch):
         import sys
         if sys.platform == "win32":
             # Windows: use winreg
-            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\FileSearchApp")
+            import winreg
+            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\FileSearchApp") # type: ignore
             if changed_item != 2: #Language changed
-                winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ, self.language)
+                winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ, self.language) # type: ignore
             if changed_item != 1: #Search Path changed
-                winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
-            winreg.CloseKey(reg_key)
+                winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path) # type: ignore
+            winreg.CloseKey(reg_key) # type: ignore
         elif sys.platform == "darwin":
             # macOS: use NSUserDefaults
             pass
@@ -373,6 +374,7 @@ class FileSearchHandler(FileSearch):
     def search_files(self,source =1):
         self.reset_data()
         keyword = self.search_input.text().strip()
+        self.info.setText("Searching, please wait...")
         if keyword:
             self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip().lower())
             for root, dirs, files in os.walk(self.search_path):
@@ -399,6 +401,7 @@ class FileSearchHandler(FileSearch):
         self.show_data(source)
 #-----------------------------------------------------------------------
     def search_by_logic(self):
+        self.info.setText("Searching, please wait...")
         if  self.filtered_files is None: 
             return
         else:
@@ -424,6 +427,7 @@ class FileSearchHandler(FileSearch):
         self.show_data()
 #-----------------------------------------------------------------------
     def filter_type(self):
+        self.info.setText("Searching, please wait...")
         filtered_files = []
         filtered_folders =  set()
         if self.search_type or len(self.search_type)>0:
@@ -438,6 +442,7 @@ class FileSearchHandler(FileSearch):
         return filtered_files, filtered_folders
     #-----------------------------------------------------------------------
     def show_data(self,source=1):
+        self.info.setText("Finished searching!")
         self.file_list.clear()
         self.folder_list.clear()
         if source == 1:

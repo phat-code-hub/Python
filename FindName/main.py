@@ -1,8 +1,9 @@
-
-from PySide6 import QtWidgets,QtCore, QtGui
+from PySide6 import QtWidgets
 from PySide6.QtWidgets import *
-from PySide6.QtCore import *
-from PySide6.QtGui import *
+from PySide6.QtCore import Qt,QUrl
+from PySide6.QtGui import QIcon,QFontMetrics,QDesktopServices
+
+import platform
 import re
 import sys
 import os
@@ -15,15 +16,25 @@ class FileSearch(QWidget):
         self.initUI()
     #-----------------------------------------------------------------------
     def default_Values(self):
+        #Some Constants
+        self.APP_NAME = {
+            "English": "FileSearch",
+            "Japanese": "ファイル検索",
+            "Vietnamese": "Search File"
+            }
+        # APP_DOMAIN = f"com.mycompany.{APP_NAME}"  # used on macOS
+        self.DEFAULT_LANGUAGE = "English"
+        self.DEFAULT_PATH = os.path.expanduser("~/Documents")
+        #Get default values
         self.language,self.search_path = self.get_default_values()
         self.lang={"English":{"ENG":"English","JP":"Japanese","VN"  :"Vietnamese"},"Japanese":{"ENG":"英語","JP":"日本語","VN"  :"ベトナム語"},
                 "Vietnamese":{"ENG":"Tiếng Anh","JP":"Tiếng Nhật","VN"  :"Tiếng Việt"}}
-        self.search={"English":{"AND":"All","OR":"Contain","NOT"  :"Not contain"},"Japanese":{"AND":"全て","OR":"いずれか","NOT"  :"いずれか除外"},
+        self.search={"English":{"AND":"All matched","OR":"Contain","NOT"  :"Not contain"},"Japanese":{"AND":"全て一致","OR":"いずれか","NOT"  :"いずれか除外"},
                 "Vietnamese":{"AND":"Tất cả","OR":"Bao hàm","NOT"  :"Không bao hàm"}}
         self.place_holder={"English":"Input search keywords","Japanese":"検索キーワードを入力","Vietnamese":"Nhập từ khóa tìm kiếm"}
         self.open_dialog_hint={"English":"Click to change search folder","Japanese":"クリックして検索フォルダを変更","Vietnamese":"Click để thay đổi đường dẫn tìm kiếm"}
         self.search_hint={"English":"Multiple keywords are separated by ',:;' or spaces",
-                        "Japanese":"複数のキーワードは英字、数字、記号とし',:;'または空白で区切って入力",
+                        "Japanese":"複数のキーワードは半角で英字、数字、記号とし',:;'または空白で区切って入力",
                         "Vietnamese":"Các từ khóa cách nhau bởi ',:;' hoặc khoảng trắng"}
         self.logic_hint = {"English":
                                 {0: "Any of the keywords matches",
@@ -50,7 +61,8 @@ class FileSearch(QWidget):
                         "SelectFolder":"Select Folder",
                         "Info":"File Information:",
                         "message":"Searching, please wait...",
-                        "finish":"Search finished!"
+                        "finish":"Search finished!",
+                        "Cancel":"Cancel"
                         },
             "Japanese":{
                         "Title": "ファイル検索",
@@ -60,7 +72,8 @@ class FileSearch(QWidget):
                         "SelectFolder":"フォルダを選択",
                         "Info":"ファイル情報:",
                         "message":"検索中、お待ちください...",
-                        "finish":"検索完了!"
+                        "finish":"検索完了!",
+                        "Cancel":"キャンセル"
                         },
             "Vietnamese":{
                         "Title": "Tìm kiếm tập tin",
@@ -70,49 +83,54 @@ class FileSearch(QWidget):
                         "SelectFolder":"Chọn thư mục",
                         "Info":"Chi tiết tập tin:",
                         "message":"Đang tìm, vui lòng đợi...",
-                        "finish":"Hoàn Thành tìm kiếm!"
+                        "finish":"Hoàn Thành tìm kiếm!",
+                        "Cancel":"Hủy"
                         }
             }
         self.type ={
             0:{"English": 'All', 'Japanese': '全て',"Vietnamese": "Tất cả"},
-            1:{"English": 'CAD Files', 'Japanese': 'CAD ファイル',  "Vietnamese": "Tập tin CAD"},
-            2:{"English": 'Excel Files', 'Japanese': 'Excel ファイル',  "Vietnamese": "Tập tin Excel"},
-            3:{"English": 'PDF Files', 'Japanese': 'PDF ファイル',  "Vietnamese": "Tập tin PDF"},
-            4:{"English": 'DXF Files', 'Japanese': 'DXF ファイル',  "Vietnamese": "Tập tin DXF"},
-            5:{"English": 'Image Files', 'Japanese': '画像 ファイル',"Vietnamese": "Tập tin hình ảnh"},
-            6:{"English": 'Video Files', 'Japanese': '動画 ファイル',"Vietnamese": "Tập tin video"},
-            7:{"English": 'Word Files', 'Japanese': 'Word ファイル',  "Vietnamese": "Tập tin Word"},
-            8:{"English": 'Text Files', 'Japanese': 'テキスト ファイル',"Vietnamese": "Tập tin text"},
-            9:{"English": 'Audio Files', 'Japanese': '音声 ファイル',"Vietnamese": "Tập tin âm thanh"},
-            10:{"English": 'Executable Files', 'Japanese': '実行可能 ファイル', "Vietnamese": "Tập tin thực thi"}
+            1:{"English": 'VectorWorks Files', 'Japanese': 'VectorWorks ファイル',  "Vietnamese": "Tập tin VectorWorks"},
+            2:{"English": 'CAD Files', 'Japanese': 'CAD ファイル',  "Vietnamese": "Tập tin CAD"},
+            3:{"English": 'Excel Files', 'Japanese': 'Excel ファイル',  "Vietnamese": "Tập tin Excel"},
+            4:{"English": 'PDF Files', 'Japanese': 'PDF ファイル',  "Vietnamese": "Tập tin PDF"},
+            5:{"English": 'DXF Files', 'Japanese': 'DXF ファイル',  "Vietnamese": "Tập tin DXF"},
+            6:{"English": 'Image Files', 'Japanese': '画像 ファイル',"Vietnamese": "Tập tin hình ảnh"},
+            7:{"English": 'Video Files', 'Japanese': '動画 ファイル',"Vietnamese": "Tập tin video"},
+            8:{"English": 'Word Files', 'Japanese': 'Word ファイル',  "Vietnamese": "Tập tin Word"},
+            9:{"English": 'Text Files', 'Japanese': 'テキスト ファイル',"Vietnamese": "Tập tin text"},
+            10:{"English": 'Audio Files', 'Japanese': '音声 ファイル',"Vietnamese": "Tập tin âm thanh"},
+            11:{"English": 'Executable Files', 'Japanese': '実行可能 ファイル', "Vietnamese": "Tập tin thực thi"}
         }
         self.ext_type ={
             0: [],
-            1: [".vwx",".sta",".mcd",".dwg", ".step", ".stp","dxf",
+            1: [".vwx",".vwxp",".vwxw",".sta"],
+            2: [".vwx",".sta",".mcd",".dwg", ".step", ".stp","dxf",
                         ".CAT",".iges", ".igs", ".sldprt", ".sldasm", ".prt"],
-            2: [".xl",".xlsx",".xlsm",".xlsb",".xltx",".xltm",".xlt",".csv",".numbers"],
-            3: [".pdf"],
-            4: ["dxf"],
-            5: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg"],
-            6: [".mp4", ".avi", ".mkv", ".mov", ".wmv"],
-            7: [ ".doc", ".docx", ".odt", ".rtf",".dot","docm","dotx"],
-            8: [".txt", ".doc", ".docx", ".odt", ".rtf",".ini",".log" ,".csv" ,".json"],
-            9: [".mp3", ".wav", ".aac", ".flac", ".ogg"],
-            10: [".exe", ".msi", ".bat", ".cmd",".pkg",".sh", ".app", ".jar", ".py", ".pyw", ".pyc"]
+            3: [".xl",".xlsx",".xlsm",".xlsb",".xltx",".xltm",".xlt",".csv",".numbers"],
+            4: [".pdf"],
+            5: ["dxf"],
+            6: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg"],
+            7: [".mp4", ".avi", ".mkv", ".mov", ".wmv"],
+            8: [ ".doc", ".docx", ".odt", ".rtf",".dot","docm","dotx"],
+            9: [".txt", ".doc", ".docx", ".odt", ".rtf",".ini",".log" ,".csv" ,".json"],
+            10: [".mp3", ".wav", ".aac", ".flac", ".ogg"],
+            11: [".exe", ".msi", ".bat", ".cmd",".pkg",".sh", ".app", ".jar", ".py", ".pyw", ".pyc"]
         }
         self.logics ={
             "OR":0,
             "AND":1,
             "NOT":2
         }
-        
-#------------------------------------------------------------------------------------------------------------------     
+        self.init =True
+#-----------------------------------------------------
     def initUI(self):
         self.default_Values()
         self.setWindowTitle(self.label[self.language]["Title"])
+        basedir = os.path.dirname(os.path.abspath(__file__))
+        self.icon = self.resource_path("favicon.ico")
+        self.setWindowIcon(QIcon(self.icon))
         self.setGeometry(100, 100, 500, 300)
         layout = QVBoxLayout()
-        
         #Languages choice
         lang_layout = QHBoxLayout()
         self.language_radio = QButtonGroup()
@@ -205,23 +223,52 @@ class FileSearch(QWidget):
         info_layout.addWidget(self.info_label)
         info_layout.addWidget(self.info)
         layout.addLayout(info_layout)
+        
+        self.cancel_button = QPushButton(self.label[self.language]["Cancel"])
+        self.cancel_button.setMaximumWidth(80)  # Won't grow beyond 80px
+        layout.addWidget(self.cancel_button,alignment=Qt.AlignCenter)
+        
         self.setLayout(layout)
+    #---------------------------------------------------------------------------  
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            QApplication.quit()
+    
+    #---------------------------------------------------------------------------
+    def resource_path(self,relative_path):
+        """Get absolute path to resource (works for dev and PyInstaller)."""
+        if hasattr(sys, "_MEIPASS"):
+            # When running as a bundled EXE
+            base_path = sys._MEIPASS
+        else:
+            # When running as a normal Python script
+            base_path = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(base_path, relative_path)
     #---------------------------------------------------------------------------
     def get_default_values(self):
         import sys
-        if sys.platform == "win32":
+        self.name  = self.APP_NAME[self.DEFAULT_LANGUAGE]
+        if platform.system() == "Windows":
             import winreg
-            # Windows: use winreg
             try:
-                reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\FileSearchApp")
+                reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.name}")
                 language,default_path= winreg.QueryValueEx(reg_key, "Language"), winreg.QueryValueEx(reg_key, "SearchPath")
                 winreg.CloseKey(reg_key)
                 return language[0],default_path[0]
             except FileNotFoundError:
-                return  "English",os.path.expanduser("~")
-        elif sys.platform == "darwin":
+                return  self.name,os.path.expanduser("~")
+        elif platform.system() == "Darwin":
+        # elif sys.platform == "darwin":
             # macOS: use NSUserDefaults
-            pass
+            # from Foundation import NSUserDefaults
+            # self.defaults = NSUserDefaults.alloc().initWithSuiteName_(f"com.mycompany.{self.name}")
+            # self.defaults = NSUserDefaults.alloc().initWithSuiteName_(f"com.mycompany.FileSearchApp")
+            # language = self.defaults.stringForKey_("Language")
+            # default_path = self.defaults.stringForKey_("SearchPath")
+            
+            language = "English"
+            default_path = "~"
+            return language, default_path
 #-----------------------------------------------------------------------
 class FileSearchHandler(FileSearch):
     def __init__(self):
@@ -265,19 +312,34 @@ class FileSearchHandler(FileSearch):
         #Show file info
         self.file_list.currentItemChanged.connect(self.show_file_info)
         self.file_list.itemDoubleClicked.connect(self.open_file_location)
+        #Quit Program
+        self.cancel_button.clicked.connect(QApplication.quit)
     #----------------------------------------------------------------
-    def change_tooltips(self,item =0):
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            QApplication.quit()
+        super().keyPressEvent(event)
+    #----------------------------------------------------------------
+    def closeEvent(self, event):
+        # Save to Windows Registry before closing
+        try:
+            self.saved_to_registry()
+        except Exception as e:
+            print(f"Registry write failed: {e}")
+
+        super().closeEvent(event)  # Call the default close event handler event.accept()  # Allow the window to close
+
+    #----------------------------------------------------------------
+    def change_tooltips(self):
         self.search_folder_change.setToolTip(self.open_dialog_hint[self.language])
         self.file_type_combo.setToolTip(self.type_hint[self.language])
         self.folder_list.setToolTip(self.folder_hint[self.language])
         self.file_list.setToolTip(self.file_hint[self.language])
-        if item == 0 or item == 1: #Search Input
-            self.search_input.setToolTip(self.search_hint[self.language])
-        elif item == 0 or item == 2:#Logic
-            logic = self.logic_hint[self.language] 
-            self.or_radio.setToolTip(logic[0])
-            self.and_radio.setToolTip(logic[1])
-            self.not_radio.setToolTip(logic[2])
+        self.search_input.setToolTip(self.search_hint[self.language])
+        logic = self.logic_hint[self.language] 
+        self.or_radio.setToolTip(logic[0])
+        self.and_radio.setToolTip(logic[1])
+        self.not_radio.setToolTip(logic[2])
     #----------------------------------------------------------------
     def open_file_dialog(self):
         select_folder = self.label[self.language]["SelectFolder"]
@@ -285,7 +347,9 @@ class FileSearchHandler(FileSearch):
         if folder_path:
             self.search_path = folder_path
             self.search_folder_path.setText(folder_path)
-            self.saved_path_to_registry()
+            self.search_files()
+        else:
+            self.show_empty()
     #----------------------------------------------------------------
     def change_language(self):
         langs,labels,types,search =self.lang,self.label,self.type,self.search
@@ -296,7 +360,7 @@ class FileSearchHandler(FileSearch):
         else:
             self.language = 'Vietnamese'
         #Update changed language to registry
-        self.save_before_close(changed_item=1)
+        self.saved_to_registry()
         #Set the labels and combo box items based on the selected language
         self.setWindowTitle(labels[self.language]["Title"])
         self.english_radio.setText(langs[self.language]["ENG"])  
@@ -312,12 +376,13 @@ class FileSearchHandler(FileSearch):
         self.file_type_label.setText(labels[self.language]["File Type:"])
         self.folder_label.setText(labels[self.language]["Folders:"])
         self.file_label.setText(labels[self.language]["Files:"])
+        self.cancel_button.setText(labels[self.language]["Cancel"])
+        self.info_label.setText(self.label[self.language]["Info"])
+        self.info.setText("")
         self.file_type_combo.clear()
         for _ in range(len(self.type)):
             self.file_type_combo.addItem(types[_][self.language])
-        self.change_tooltips(1)
-        self.change_logic()
-        self.change_type()
+        self.change_tooltips()
     #----------------------------------------------------------------
     def reset_data(self):
         self.keywords = ""
@@ -327,19 +392,21 @@ class FileSearchHandler(FileSearch):
         self.found_files_short = []
         self.found_folders_short = set()
     #----------------------------------------------------------------
+    #Search from search pattern
     def change_search_source(self,source =1):
-        if source == 2:
-            if self.folder_list.currentItem() is None:
-                return
-            else:
-                self.search_path = os.path.join(self.search_path,self.folder_list.selectedItems()[0].text())
-        self.search_folder_path.setText(self.search_path)
-        self.saved_path_to_registry()
+        # self.init = True
         if self.search_input.text().strip() :
+            if source == 2:
+                if self.folder_list.currentItem() is None:
+                    return
+                else:
+                    self.search_path = os.path.join(self.search_path,self.folder_list.selectedItems()[0].text())
+            self.search_folder_path.setText(self.search_path)
             self.info.setText(self.label[self.language]["message"])
             self.search_files(source = source)
         else:
-            self.show_data()
+            if not self.init:
+                self.show_empty()
     #----------------------------------------------------------------
     def change_logic(self):
         if self.and_radio.isChecked():
@@ -348,7 +415,6 @@ class FileSearchHandler(FileSearch):
             self.logic_index = self.logics["OR"]
         else:
             self.logic_index = self.logics["NOT"]
-        self.change_tooltips(2)
         self.search_files()
     #----------------------------------------------------------------
     def change_type(self):
@@ -359,21 +425,14 @@ class FileSearchHandler(FileSearch):
         self.search_type =self.ext_type[self.type_index]
         self.search_files()
     #----------------------------------------------------------------
-    def saved_path_to_registry(self):
-        self.save_before_close(changed_item=2)
-    #----------------------------------------------------------------
-    def save_before_close(self,changed_item=0):
-        import sys
-        if sys.platform == "win32":
-            # Windows: use winreg
+    def saved_to_registry(self):
+        if platform.system() == "Windows":
             import winreg
-            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\FileSearchApp") # type: ignore
-            if changed_item != 2: #Language changed
-                winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ, self.language) # type: ignore
-            if changed_item != 1: #Search Path changed
-                winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path) # type: ignore
-            winreg.CloseKey(reg_key) # type: ignore
-        elif sys.platform == "darwin":
+            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.APP_NAME[self.DEFAULT_LANGUAGE]}")
+            winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ, self.language)
+            winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
+            winreg.CloseKey(reg_key)
+        elif platform.system() == "Darwin":
             # macOS: use NSUserDefaults
             pass
 #-----------------------------------------------------------------------
@@ -382,6 +441,7 @@ class FileSearchHandler(FileSearch):
         keyword = self.search_input.text().strip()
         self.info.setText(self.label[self.language]["message"])
         if keyword:
+            self.init = False
             self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip().lower())
             for root, dirs, files in os.walk(self.search_path):
                 # Check if any file or folder name matches any part of the search pattern
@@ -401,34 +461,25 @@ class FileSearchHandler(FileSearch):
                 self.found_files,folders = self.filter_type()
                 self.found_folders = folders.intersection(self.found_folders)
             self.filtered_files, self.filtered_folders = self.found_files, self.found_folders
+            self.show_data(source)
         else:#Nothing selected 
             self.file_list.clear()
             self.folder_list.clear()
-        self.show_data(source)
+            if not self.init:
+                self.show_empty()
 #-----------------------------------------------------------------------
-    def search_by_logic(self):
-        if  self.filtered_files is None: 
-            return
-        else:
-            if self.logic_index == 0: #OR:
-                self.filtered_files = self.found_files
-                self.filtered_folders =self.found_folders
-            else:
-                for file in self.found_files:
-                    if self.logic_index == 1:#AND
-                        found_files = []
-                        found_folders = set()
-                        self.condition =all(part in file for part in self.keywords)
-                        if os.path.isfile(file):
-                            found_files.append(file)
-                            found_folders.add(os.path.dirname(file))
-                        elif os.path.isdir(file):
-                            found_folders.add(file)
-                        self.filtered_files = found_files
-                        self.filtered_folders = found_folders #.intersection(self.filtered_folders)
-                    elif self.logic_index ==2:#NOT
-                        set_files = set(self.filtered_files)
-                        self.filtered_files = [item for item in self.found_files if item not in set_files]
+    def show_empty(self):
+        self.reset_data()
+        for root, dirs, _ in os.walk(self.search_path):
+            if dirs:
+                for dir in dirs:
+                    self.found_folders.add(os.path.join(root, dir))
+        if self.found_folders:
+            for folder in self.found_folders:
+                partial_path = folder.removeprefix(self.search_path)
+                if partial_path.startswith(os.path.sep):
+                    partial_path = partial_path[1:]
+                self.found_folders_short.add(partial_path)    
         self.show_data()
 #-----------------------------------------------------------------------
     def filter_type(self):
@@ -488,7 +539,8 @@ class FileSearchHandler(FileSearch):
             file_path = file_path.removeprefix(self.search_path).removeprefix(os.path.sep)
             foundFolders =[i.text().lower() for i in self.folder_list.findItems("",Qt.MatchContains)]
             index = list(filter(lambda i:foundFolders[i] in file_path,range(len(foundFolders))))
-            self.folder_list.setCurrentRow(index[0] if index else None)
+            if index:
+                self.folder_list.setCurrentRow(index[0])
             short_path =fm.elidedText(self.found_files[self.file_list.row(current)],Qt.ElideMiddle,600)
             self.info.setText(short_path)
         else:
@@ -515,69 +567,3 @@ if __name__ == "__main__":
     form = FileSearchHandler()
     form.show()
     sys.exit(app.exec())
-    
-    
-    
-# Now we want 2 things: ( in WIN was OK  , now we do for MAC IOS)
-# 1) When open the app : to read 2 info: "Language" and "Search Folder" to use 
-# 2) Store these above 2 variables to memory for use later after starting again
- 
-# now, these 2 variables are "self.language" and "self.search_path"
-
-# def __init__(self):
-#     # Load default values from the registry on macOS
-#     self.load_default_values()
-
-#     # Use the loaded values
-#     print(f"Language: {self.language}")
-#     print(f"Search Folder: {self.search_path}")
-
-#----------------
-# def update_language(self, language):
-#     # Update the language value in the registry on macOS
-#     self.language = language
-#     self.save_path_to_registry()
-
-# def update_search_path(self, search_path):
-#     # Update the search path value in the registry on macOS
-#     self.search_path = search_path
-#     self.save_path_to_registry()
-
-#---------------------
-
-
-# import plistlib
-# import os
-
-# def get_default_values():
-#     # Read default values from the registry on macOS
-#     default_values = {}
-#     registry_path = os.path.expanduser("~/Library/Preferences/com.example.app")
-#     if os.path.exists(registry_path):
-#         registry_file = os.path.join(registry_path, "com.example.app.plist")
-#         if os.path.exists(registry_file):
-#             with open(registry_file, "rb") as f:
-#                 plist = plistlib.load(f)
-#                 default_values = dict(plist)
-
-#     return default_values
-
-# def save_path_to_registry(path):
-#     # Save the path to the registry on macOS
-#     registry_path = os.path.expanduser("~/Library/Preferences/com.example.app")
-#     if not os.path.exists(registry_path):
-#         os.makedirs(registry_path)
-#     registry_file = os.path.join(registry_path, "com.example.app.plist")
-#     default_values = get_default_values()
-#     default_values["Language"] = self.language
-#     default_values["Search Folder"] = self.search_path
-#     with open(registry_file, "wb") as f:
-#         plistlib.dump(default_values, f)
-
-# def load_default_values():
-#     # Load default values from the registry on macOS
-#     default_values = get_default_values()
-#     if "Language" in default_values:
-#         self.language = default_values["Language"]
-#     if "Search Folder" in default_values:
-#         self.search_path = default_values["Search Folder"]

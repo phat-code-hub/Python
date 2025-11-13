@@ -125,7 +125,7 @@ class FileSearch(QWidget):
 #-----------------------------------------------------
     def initUI(self):
         self.default_Values()
-        self.setWindowTitle(self.label[self.language]["Title"])
+        self.setWindowTitle(self.APP_NAME[self.DEFAULT_LANGUAGE])
         basedir = os.path.dirname(os.path.abspath(__file__))
         self.icon = self.resource_path("favicon.ico")
         self.setWindowIcon(QIcon(self.icon))

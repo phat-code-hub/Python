@@ -33,9 +33,6 @@ class CheckForm(QWidget):
         self.setLayout(layout)
     def check_password(self):
         entered_password = self.password_input.text()
-        # correct_password = "secret123"
-
-        # if entered_password == correct_password:
         if "11" in entered_password and "3" in entered_password:
             self.open_main_form()
         else:
@@ -619,11 +616,5 @@ if __name__ == "__main__":
     else:
         form = CheckForm()
     import re
-    # app = QtWidgets.QApplication(sys.argv)
-    # test_string = "hello world 11"
-    # if bool(re.search(r'11', test_string) and re.search(r'3', test_string)):
-    #     form = FileSearchHandler()
-    # else:
-    #     form = CheckForm()
     form.show()
     sys.exit(app.exec())

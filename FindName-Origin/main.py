@@ -9,45 +9,6 @@ import sys
 import os
 #-----------------------------------------------------------------------
 
-class CheckForm(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Password Check")
-        self.setGeometry(100, 100, 300, 150)
-        self.setup_ui()
-
-    def setup_ui(self):
-        layout = QVBoxLayout()
-
-        self.label = QLabel("Enter your password:")
-        layout.addWidget(self.label)
-
-        self.password_input = QLineEdit()
-        self.password_input.setEchoMode(QLineEdit.Password)
-        layout.addWidget(self.password_input)
-
-        self.check_button = QPushButton("Check Password")
-        self.check_button.clicked.connect(self.check_password)
-        layout.addWidget(self.check_button)
-
-        self.setLayout(layout)
-    def check_password(self):
-        entered_password = self.password_input.text()
-        # correct_password = "secret123"
-
-        # if entered_password == correct_password:
-        if "11" in entered_password and "3" in entered_password:
-            self.open_main_form()
-        else:
-            QMessageBox.critical(self, "Error", "Incorrect password.")
-            self.close()
-
-    def open_main_form(self):
-        self.main_form = FileSearchHandler()
-        self.main_form.show()
-        self.close()
-
-#----------------------------------------------------------------------------
     
 class FileSearch(QWidget):
     def __init__(self):
@@ -165,7 +126,7 @@ class FileSearch(QWidget):
     def initUI(self):
         self.default_Values()
         self.setWindowTitle(self.APP_NAME[self.DEFAULT_LANGUAGE])
-        # basedir = os.path.dirname(os.path.abspath(__file__))
+        basedir = os.path.dirname(os.path.abspath(__file__))
         self.icon = self.resource_path("favicon.ico")
         self.setWindowIcon(QIcon(self.icon))
         self.setGeometry(100, 100, 500, 300)
@@ -602,28 +563,7 @@ class FileSearchHandler(FileSearch):
 #-----------------------------------------------------------------------         
 # Run the application, main loop 
 if __name__ == "__main__":
-    import sys
-    if platform.system() == "Windows":
-        import winreg
-        try:
-            reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\\FileSearch")
-            passed= winreg.QueryValueEx(reg_key, "Passed")
-            winreg.CloseKey(reg_key)
-        except FileNotFoundError:
-            passed = False
-    elif platform.system() == "Darwin":
-        pass
     app = QtWidgets.QApplication(sys.argv)
-    if passed[0] == "OK":
-        form = FileSearchHandler()
-    else:
-        form = CheckForm()
-    import re
-    # app = QtWidgets.QApplication(sys.argv)
-    # test_string = "hello world 11"
-    # if bool(re.search(r'11', test_string) and re.search(r'3', test_string)):
-    #     form = FileSearchHandler()
-    # else:
-    #     form = CheckForm()
+    form = FileSearchHandler()
     form.show()
     sys.exit(app.exec())

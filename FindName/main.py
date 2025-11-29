@@ -2,6 +2,7 @@ from PySide6 import QtWidgets
 from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt,QUrl
 from PySide6.QtGui import QIcon,QFontMetrics,QDesktopServices
+from PySide6.QtWebEngineWidgets import QWebEngineView
 
 import platform
 import re
@@ -15,10 +16,9 @@ class CheckForm(QWidget):
         self.setWindowTitle("Password Check")
         self.setGeometry(100, 100, 300, 150)
         self.setup_ui()
-
+    #--------------------------------------------------
     def setup_ui(self):
         layout = QVBoxLayout()
-
         self.label = QLabel("Enter your password:")
         layout.addWidget(self.label)
 
@@ -31,19 +31,25 @@ class CheckForm(QWidget):
         layout.addWidget(self.check_button)
 
         self.setLayout(layout)
+    #--------------------------------------------------
     def check_password(self):
         entered_password = self.password_input.text()
         if "11" in entered_password and "3" in entered_password:
-            self.open_main_form()
+            self.store_password()
+            self.main_form = FileSearchHandler()
+            self.main_form.show()
         else:
             QMessageBox.critical(self, "Error", "Incorrect password.")
-            self.close()
-
-    def open_main_form(self):
-        self.main_form = FileSearchHandler()
-        self.main_form.show()
         self.close()
-
+    #--------------------------------------------------
+    def store_password(self):
+        if platform.system() == "Windows":
+            import winreg
+            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\\FileSearch")
+            winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
+            winreg.CloseKey(reg_key)
+        elif platform.system() == "Darwin":
+            pass
 #----------------------------------------------------------------------------
     
 class FileSearch(QWidget):
@@ -251,6 +257,10 @@ class FileSearch(QWidget):
         file_layout.addWidget(self.file_list)
         list_layout.addLayout(file_layout)  
         layout.addLayout(list_layout)
+        
+        # self.preview = PreviewWidget()
+        # layout.addWidget(self.preview)
+        
         
         info_layout = QHBoxLayout()
         self.info_label = QLabel(self.label[self.language]["Info"])
@@ -461,6 +471,7 @@ class FileSearchHandler(FileSearch):
         self.search_type =self.ext_type[self.type_index]
         self.search_files()
     #----------------------------------------------------------------
+    #----------------------------------------------------------------
     def saved_to_registry(self):
         if platform.system() == "Windows":
             import winreg
@@ -600,21 +611,20 @@ class FileSearchHandler(FileSearch):
 # Run the application, main loop 
 if __name__ == "__main__":
     import sys
+    app = QtWidgets.QApplication(sys.argv)
+    passed =False
     if platform.system() == "Windows":
         import winreg
         try:
             reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\\FileSearch")
-            passed= winreg.QueryValueEx(reg_key, "Passed")
-            winreg.CloseKey(reg_key)
-        except FileNotFoundError:
-            passed = False
+            is_passed= winreg.QueryValueEx(reg_key, "Passed")
+            if is_passed[0]== "True":
+                passed = True
+        except Exception :
+            pass
+        winreg.CloseKey(reg_key)
     elif platform.system() == "Darwin":
         pass
-    app = QtWidgets.QApplication(sys.argv)
-    if passed[0] == "OK":
-        form = FileSearchHandler()
-    else:
-        form = CheckForm()
-    import re
+    form = FileSearchHandler() if passed else CheckForm()
     form.show()
     sys.exit(app.exec())

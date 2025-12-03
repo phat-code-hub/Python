@@ -1,8 +1,8 @@
 import sys
 import os
 from PySide6.QtWidgets import (
-    QApplication, QWidget, QListWidget, QLabel, QPushButton,
-    QVBoxLayout, QTextEdit, QMessageBox
+    QApplication, QWidget, QListWidget, QLabel, QPushButton,QSplitter,
+    QVBoxLayout,QHBoxLayout, QSizePolicy,QTextEdit, QMessageBox
 )
 from PySide6.QtGui import QPixmap,QImageReader
 from PySide6.QtCore import Qt
@@ -26,14 +26,24 @@ class PreviewForm(QWidget):
         self.preview.setStyleSheet("border: 1px solid gray;")
         self.preview.setMinimumHeight(250)
         self.preview.setWordWrap(True)
-
+        self.preview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)  # Set size policy to expand in both directions
+        self.preview.setContentsMargins(0, 0, 0, 0)  # Remove margins to allow resizing
         self.cancel_btn = QPushButton("Cancel")
 
         # Layout
         layout = QVBoxLayout()
-        layout.addWidget(self.listbox)
-        layout.addWidget(self.preview)
+        
+        layoutH = QHBoxLayout()
+        splitter = QSplitter(Qt.Horizontal, self)
+        splitter.addWidget(self.listbox)
+        splitter.addWidget(self.preview)
+        splitter.setSizes([200, 300])
+        
+        layoutH.addWidget(splitter)
+        
+        layout.addLayout(layoutH)
         layout.addWidget(self.cancel_btn)
+        
         self.setLayout(layout)
 
         # Files
@@ -89,13 +99,20 @@ class PreviewForm(QWidget):
         ]
         # CAD_EXT = ['.step', '.stp', '.iges', '.igs']
         CAD_EXT = ['.vwx', '.dwg', '.dxf']
-        self.clear_preview
-        if ext in  TEXT_EXT:
+        self.clear_preview()
+        if ext.encode() in supported_ext:
+            self.preview_image(filepath)
+        elif ext in TEXT_EXT:
             self.preview_text(filepath)
-        if ext == ".docx":
+        elif ext == ".docx":
             self.preview_word(filepath)
-        if ext == ".xlsx":
+        elif ext == ".xlsx":
             self.preview_excel(filepath)
+        elif ext in CAD_EXT:
+            self.preview.setText("[Cannot preview CAD file]")
+        else:
+            self.preview.setText("[Unsupported file type]")
+
     # -----------------------------------------
     # Preview Methods
     # -----------------------------------------
@@ -112,10 +129,37 @@ class PreviewForm(QWidget):
         if pixmap.isNull():
             self.preview.setText("[Cannot load image]")
         else:
-            scaled = pixmap.scaled(self.preview.width(), self.preview.height(),
-                                Qt.KeepAspectRatio)
-            self.preview.setPixmap(scaled)
+            # scaled = pixmap.scaled(self.preview.width(), self.preview.height(),
+            #                     Qt.KeepAspectRatio)
+            # self.preview.setPixmap(scaled)
+            self.original_pixmap = pixmap   # ← store original full-quality image
+            self.update_scaled_image()
     # ----------------------------------------- 
+    def update_scaled_image(self):
+        if self.original_pixmap is None:
+            return
+
+        scaled = self.original_pixmap.scaled(
+            self.preview.width(),
+            self.preview.height(),
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation   # ← smoother resize!
+        )
+        self.preview.setPixmap(scaled)
+
+    def resizeEvent(self, event):
+        # if self.preview.pixmap():
+        #     pixmap = self.preview.pixmap()
+        #     scaled = pixmap.scaled(
+        #         self.preview.width(),
+        #         self.preview.height(),
+        #         Qt.KeepAspectRatio
+        #     )
+        #     self.preview.setPixmap(scaled)
+        if hasattr(self, "original_pixmap") and self.original_pixmap:
+            self.update_scaled_image()
+        super().resizeEvent(event)
+
     def preview_word(self, filepath):
         from docx import Document
         try:

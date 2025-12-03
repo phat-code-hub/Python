@@ -2,10 +2,7 @@
 import sys
 from PySide6.QtWidgets import QApplication
 from ui_main import CheckForm, FileSearchHandler
-# from actions import check_registration
-from actions import *
-# import languages
-# import platform
+from actions import check_registration
 
 def main():
     app = QApplication(sys.argv)

@@ -10,56 +10,6 @@ TITLE = {
 LANGUAGES ={"English":{"ENG":"English","JP":"Japanese","VN"  :"Vietnamese"},
             "Japanese":{"ENG":"英語","JP":"日本語","VN"  :"ベトナム語"},
             "Vietnamese":{"ENG":"Tiếng Anh","JP":"Tiếng Nhật","VN"  :"Tiếng Việt"}}
-
-
-OPTIONS ={"English":{"AND":"All matched","OR":"Contain","NOT"  :"Not contain"},
-        "Japanese":{"AND":"全て一致","OR":"いずれか","NOT"  :"いずれか除外"},
-        "Vietnamese":{"AND":"Tất cả","OR":"Bao hàm","NOT"  :"Không bao hàm"}}
-
-PLACE_HOLDER={"English":"Input search keywords",
-            "Japanese":"検索キーワードを入力",
-            "Vietnamese":"Nhập từ khóa tìm kiếm"}
-
-HINT_DIALOG={"English":"Click to change search folder",
-            "Japanese":"クリックして検索フォルダを変更",
-            "Vietnamese":"Click để thay đổi đường dẫn tìm kiếm"}
-
-
-
-HINT_SEARCH={"English":"Multiple keywords are separated by ',:;' or spaces",
-                "Japanese":"複数のキーワードは半角で英字、数字、記号とし',:;'または空白で区切って入力",
-                "Vietnamese":"Các từ khóa cách nhau bởi ',:;' hoặc khoảng trắng"}
-
-HINT_LOGIC = {"English":
-                {
-                0: "Any of the keywords matches",
-                1: "All of the keywords matches, ignore order",
-                2: "Not contain all keywords"
-                },
-            "Japanese":{
-                0: "いずれかのキーワードに一致",
-                1: "順番問わず、全てのキーワードに一致",
-                2: "全てのキーワードに一致しない"
-                },
-            "Vietnamese":{
-                0: "Có ít nhất một từ khóa ",
-                1: "Tất cả đều tìm thấy , không cần thứ tự",
-                2: "Không chứa tất cả các từ khóa này"
-                }
-            }
-
-HINT_TYPE = {"English":"Select file type",
-            "Japanese":"ファイルタイプを選択",
-            "Vietnamese":"Chọn Lodi tập tin"}
-
-HINT_FOLDER = {"English":"Double Click to change search folder",
-                "Japanese":"ダブルクリックしてフォルダを選択、再検索",
-                "Vietnamese":"Click đúp để chọn đường dẫn tìm kiếm, tìm kiếm lại"}
-
-HINT_FILE = {"English":"Double Click to go file location",
-            "Japanese":"ダブルクリックしてファイルの場所を開く",
-            "Vietnamese":"Click đúp để đi tới vị trí tập tin"}
-
 LABELS = {
     "English": {
         "Title": "File Search",
@@ -119,6 +69,53 @@ TYPES ={
     11:{"English": 'Executable Files', 'Japanese': '実行可能 ファイル', "Vietnamese": "Tập tin thực thi"}
     }
 
+OPTIONS ={"English":{"AND":"All matched","OR":"Contain","NOT"  :"Not contain"},
+        "Japanese":{"AND":"全て一致","OR":"いずれか","NOT"  :"いずれか除外"},
+        "Vietnamese":{"AND":"Tất cả","OR":"Bao hàm","NOT"  :"Không bao hàm"}}
+
+PLACE_HOLDER={"English":"Input search keywords",
+            "Japanese":"検索キーワードを入力",
+            "Vietnamese":"Nhập từ khóa tìm kiếm"}
+
+HINT ={
+    "Dialog" :{"English":"Click to change search folder",
+            "Japanese":"クリックして検索フォルダを変更",
+            "Vietnamese":"Click để thay đổi đường dẫn tìm kiếm"},
+    "Search":{"English":"Multiple keywords are separated by ',:;' or spaces",
+                "Japanese":"複数のキーワードは半角で英字、数字、記号とし',:;'または空白で区切って入力",
+                "Vietnamese":"Các từ khóa cách nhau bởi ',:;' hoặc khoảng trắng"},
+    "Logic" : {"English":
+                {
+                0: "Any of the keywords matches",
+                1: "All of the keywords matches, ignore order",
+                2: "Not contain all keywords"
+                },
+            "Japanese":{
+                0: "いずれかのキーワードに一致",
+                1: "順番問わず、全てのキーワードに一致",
+                2: "全てのキーワードに一致しない"
+                },
+            "Vietnamese":{
+                0: "Có ít nhất một từ khóa ",
+                1: "Tất cả đều tìm thấy , không cần thứ tự",
+                2: "Không chứa tất cả các từ khóa này"
+                }
+            },
+    
+    "Type" : {"English":"Select file type",
+            "Japanese":"ファイルタイプを選択",
+            "Vietnamese":"Chọn Lodi tập tin"},
+
+    "Folder" : {"English":"Double Click to change search folder",
+                "Japanese":"ダブルクリックしてフォルダを選択、再検索",
+                "Vietnamese":"Click đúp để chọn đường dẫn tìm kiếm, tìm kiếm lại"},
+
+    "File" : {"English":"Double Click to go file location",
+            "Japanese":"ダブルクリックしてファイルの場所を開く",
+            "Vietnamese":"Click đúp để đi tới vị trí tập tin"}
+
+}
+
 EXTENSIONS ={
     0: [],
     1: [".vwx",".vwxp",".vwxw",".sta"],
@@ -130,11 +127,22 @@ EXTENSIONS ={
     6: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg"],
     7: [".mp4", ".avi", ".mkv", ".mov", ".wmv"],
     8: [ ".doc", ".docx", ".odt", ".rtf",".dot","docm","dotx"],
-    9: [".txt", ".doc", ".docx", ".odt", ".rtf",".ini",".log" ,".csv" ,".json"],
+    9: [".txt", ".doc", ".docx", ".odt", ".rtf",".ini",".log" ,".csv" ,
+        ".md",".yml",".yaml",".json"],
     10: [".mp3", ".wav", ".aac", ".flac", ".ogg"],
     11: [".exe", ".msi", ".bat", ".cmd",".pkg",".sh", ".app", ".jar", ".py", ".pyw", ".pyc"]
     }
-
+TEXT_EXT = [
+        ".txt",
+        ".ini",
+        ".md",
+        ".csv",
+        ".yml",
+        ".yaml",
+        ".log",
+        ".json"
+    ]
+CAD_EXT = ['.vwx', '.dwg', '.dxf']
 LOGICS ={
     "OR":0,
     "AND":1,

@@ -1,38 +1,64 @@
 # actions.py
+#--------------------------------------------------------------------------------------
 import os
 import sys
 import platform
-import winreg
-from PySide6.QtWidgets import QMessageBox,QFileDialog,QApplication
+from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit
 from PySide6.QtCore import Qt,QUrl
-import ui_main
 from languages import *
-from PySide6.QtGui import QIcon,QFontMetrics,QDesktopServices
+from PySide6.QtGui import QFontMetrics,QDesktopServices
+import ui_main
+from PySide6.QtGui import QPixmap,QImageReader
 #--------------------------------------------------------------------------------------
 def check_registration():
     passed = False
     if platform.system() == "Windows":
+        import winreg
         try:
             reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\\FileSearch")
             is_passed = winreg.QueryValueEx(reg_key, "Passed")
             if is_passed[0] == "True":
                 passed = True
+            winreg.CloseKey(reg_key)    
         except Exception:
-            pass
-        winreg.CloseKey(reg_key)
+            passed=False
+    elif platform.system() == "Darwin":
+        pass
     return passed
 #--------------------------------------------------------------------------------------
-def check_password(password):
+def toggle_password_visibility(self,state):
+    if state == Qt.Checked:
+        self.password_input.setEchoMode(QLineEdit.Normal)
+    else:
+        self.password_input.setEchoMode(QLineEdit.Password)
+#--------------------------------------------------------------------------------------
+def check_password(self,password):
     import re
     # if re.match(r"^0\w*",password):
-    if ("11" in password) and ("3" in password):
-        form = ui_main.FileSearchHandler()
-        form.show()
+    # if ("11" in password) and ("3" in password):
+    if "0" in password:
+        self.close()
+        create_registry(self)
+        ui_main.FileSearchHandler().show()
     else:
         QMessageBox.critical(None, "Error", "Incorrect password.")
+        self.close()
 #--------------------------------------------------------------------------------------
+def create_registry(self):
+        if platform.system() == "Windows":
+            import winreg
+            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\FileSearch")
+            winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ,"English")
+            winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, os.path.expanduser("~")+"\\Documents")
+            winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
+            winreg.CloseKey(reg_key)
+        elif platform.system() == "Darwin":
+            # macOS: use NSUserDefaults
+            pass
+#----------------------------------------------------------------   
 def change_language(self):
     langs,labels,types,search =LANGUAGES,LABELS,TYPES,OPTIONS
+    
     if self.english_radio.isChecked():
         self.language = 'English'
     elif self.japanese_radio.isChecked():
@@ -63,7 +89,8 @@ def change_language(self):
     for _ in range(len(self.type)):
         self.file_type_combo.addItem(types[_][self.language])
     change_tooltips(self)
-    
+
+
 #----------------------------------------------------------------   
 def saved_to_registry(self):
         
@@ -72,6 +99,7 @@ def saved_to_registry(self):
             reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.APP_NAME}")
             winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ, self.language)
             winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
+            winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
             winreg.CloseKey(reg_key)
         elif platform.system() == "Darwin":
             # macOS: use NSUserDefaults
@@ -126,14 +154,18 @@ def show_file_info(self,current):
     fm = QFontMetrics(self.info.font())
     if current:
         file_index = self.file_list.currentRow()
+        #Get file full path
         file_path = os.path.dirname(self.found_files[file_index]).lower()
         file_path = file_path.removeprefix(self.search_path).removeprefix(os.path.sep)
         foundFolders =[i.text().lower() for i in self.folder_list.findItems("",Qt.MatchContains)]
         index = list(filter(lambda i:foundFolders[i] in file_path,range(len(foundFolders))))
         if index:
             self.folder_list.setCurrentRow(index[0])
+        full_path =self.found_files[self.file_list.row(current)]
+        #Get file name
         short_path =fm.elidedText(self.found_files[self.file_list.row(current)],Qt.ElideMiddle,600)
         self.info.setText(short_path)
+        preview_file(self,full_path)
     else:
         self.info.setText("")
 #-----------------------------------------------------------------------   
@@ -152,12 +184,12 @@ def open_file_location(self,item):
         QMessageBox.critical(self, "Error", f"Failed to open folder:\n{e}")
 #-----------------------------------------------------------------------   
 def change_tooltips(self):
-    self.search_folder_change.setToolTip(self.hint_dialog[self.language])
-    self.file_type_combo.setToolTip(self.hint_type[self.language])
-    self.folder_list.setToolTip(self.hint_folder[self.language])
-    self.file_list.setToolTip(self.hint_file[self.language])
-    self.search_input.setToolTip(self.hint_search[self.language])
-    logic = self.hint_logic[self.language] 
+    self.search_folder_change.setToolTip(HINT["Dialog"][self.language])
+    self.file_type_combo.setToolTip(HINT["Type"][self.language])
+    self.folder_list.setToolTip(HINT["Folder"][self.language])
+    self.file_list.setToolTip(HINT["File"][self.language])
+    self.search_input.setToolTip(HINT["Search"][self.language])
+    logic = HINT["Logic"][self.language] 
     self.or_radio.setToolTip(logic[0])
     self.and_radio.setToolTip(logic[1])
     self.not_radio.setToolTip(logic[2])
@@ -217,7 +249,7 @@ def show_data(self,source=1):
         for folder in self.found_folders_short:
             self.folder_list.addItem(folder)
     self.folder_label.setText(self.label[self.language]["Folders"]+" "+ str(self.folder_list.count()))
-#-----------------------------------------------------------------------   
+#-----------------------------------------------------------------------
 def filter_type(self):
     filtered_files = []
     filtered_folders =  set()
@@ -266,3 +298,30 @@ def search_files(self,source =1):
             if not self.init:
                 show_empty(self)
 #----------------------------------------------------------------------
+def clear_preview(self):
+    self.preview.clear()
+    self.preview.setText("")
+#---------------------------------------------------------------------
+def preview_file(self,path)    :
+    ext = os.path.splitext(path)[1].lower()
+    # Check supported types
+    #Check if it  is image, pdf
+    supported_ext = [b"." + fmt for fmt in QImageReader.supportedImageFormats()]
+    clear_preview(self)
+    #Check if it is plaintext
+    
+    # if ext.encode() in supported_ext:
+    #     self.preview_image(path)
+    # CAD_EXT = ['.step', '.stp', '.iges', '.igs']
+    if ext.encode() in supported_ext:
+        self.preview_image(path)
+    elif ext in TEXT_EXT:
+        self.preview_text(path)
+    elif ext == ".docx":
+        self.preview_word(path)
+    elif ext == ".xlsx":
+        self.preview_excel(path)
+    elif ext in CAD_EXT:
+        self.preview.setText("[Cannot preview CAD file]")
+    else:
+        self.preview.setText("[Unsupported file type]")

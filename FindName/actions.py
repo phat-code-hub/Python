@@ -314,7 +314,7 @@ def preview_file(self,path)    :
     #     self.preview_image(path)
     # CAD_EXT = ['.step', '.stp', '.iges', '.igs']
     if ext.encode() in supported_ext:
-        self.preview_image(path)
+        preview_image(self,path)
     elif ext in TEXT_EXT:
         self.preview_text(path)
     elif ext == ".docx":
@@ -325,3 +325,44 @@ def preview_file(self,path)    :
         self.preview.setText("[Cannot preview CAD file]")
     else:
         self.preview.setText("[Unsupported file type]")
+
+#---------------------------------------------------------------------
+def preview_image(self,path):
+    pixmap = QPixmap(path)
+    if pixmap.isNull():
+        self.preview.setText("[Cannot load image]")
+    else:
+        scaled = pixmap.scaled(self.preview.width(), self.preview.height(),
+                            Qt.KeepAspectRatio)
+        self.preview.setPixmap(scaled)
+        self.original_pixmap = pixmap   # ← store original full-quality image
+        self.update_scaled_image()
+#---------------------------------------------------------------------
+def update_scaled_image(self):
+    if self.original_pixmap is None:
+        return
+
+    scaled = self.original_pixmap.scaled(
+        self.preview.width(),
+        self.preview.height(),
+        Qt.KeepAspectRatio,
+        Qt.SmoothTransformation   # ← smoother resize!
+    )
+    self.preview.setPixmap(scaled)
+
+#---------------------------------------------------------------------
+def resizeEvent(self, event):
+    # if self.preview.pixmap():
+    #     pixmap = self.preview.pixmap()
+    #     scaled = pixmap.scaled(
+    #         self.preview.width(),
+    #         self.preview.height(),
+    #         Qt.KeepAspectRatio
+    #     )
+    #     self.preview.setPixmap(scaled)
+    if hasattr(self, "original_pixmap") and self.original_pixmap:
+        self.update_scaled_image()
+    super().resizeEvent(event)
+#---------------------------------------------------------------------
+def preview_text(path):
+    pass

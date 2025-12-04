@@ -81,9 +81,9 @@ HINT ={
     "Dialog" :{"English":"Click to change search folder",
             "Japanese":"クリックして検索フォルダを変更",
             "Vietnamese":"Click để thay đổi đường dẫn tìm kiếm"},
-    "Search":{"English":"Multiple keywords are separated by ',:;' or spaces",
-                "Japanese":"複数のキーワードは半角で英字、数字、記号とし',:;'または空白で区切って入力",
-                "Vietnamese":"Các từ khóa cách nhau bởi ',:;' hoặc khoảng trắng"},
+    "Search":{"English":"Multiple keywords are separated by ',:;' or spaces, '*' for show all",
+                "Japanese":"複数のキーワードは半角で英字、数字、記号とし',:;'または空白で区切って入力,'*'は全て表示",
+                "Vietnamese":"Các từ khóa cách nhau bởi ',:;' hoặc khoảng trắng,'*' để hiển thị tất cả"},
     "Logic" : {"English":
                 {
                 0: "Any of the keywords matches",
@@ -124,7 +124,7 @@ EXTENSIONS ={
     3: [".xl",".xlsx",".xlsm",".xlsb",".xltx",".xltm",".xlt",".csv",".numbers"],
     4: [".pdf"],
     5: ["dxf"],
-    6: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg"],
+    6: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg","png"],
     7: [".mp4", ".avi", ".mkv", ".mov", ".wmv"],
     8: [ ".doc", ".docx", ".odt", ".rtf",".dot","docm","dotx"],
     9: [".txt", ".doc", ".docx", ".odt", ".rtf",".ini",".log" ,".csv" ,

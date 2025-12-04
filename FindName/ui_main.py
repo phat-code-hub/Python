@@ -1,5 +1,5 @@
 # ui_main.py
-# from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton
+
 import os,sys
 from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt

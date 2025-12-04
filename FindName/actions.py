@@ -3,13 +3,16 @@
 import os
 import sys
 import platform
+import openpyxl
 from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit
 from PySide6.QtCore import Qt,QUrl
 from languages import *
 from PySide6.QtGui import QFontMetrics,QDesktopServices
 import ui_main
 from PySide6.QtGui import QPixmap,QImageReader
+
 #--------------------------------------------------------------------------------------
+
 def check_registration():
     passed = False
     if platform.system() == "Windows":
@@ -114,7 +117,7 @@ def open_file_dialog(self):
         self.search_folder_path.setText(folder_path)
         search_files(self)
     else:
-        self.show_empty()
+        show_empty()
 #----------------------------------------------------------------
 #Search from search pattern
 def change_search_source(self,source =1):
@@ -130,7 +133,7 @@ def change_search_source(self,source =1):
         search_files(self,source = source)
     else:
         if not self.init:
-            self.show_empty()
+            show_empty(self)
 #----------------------------------------------------------------
 def change_type(self):
         if self.file_type_combo.currentIndex() == -1:
@@ -214,7 +217,7 @@ def show_empty(self):
                 if partial_path.startswith(os.path.sep):
                     partial_path = partial_path[1:]
                 self.found_folders_short.add(partial_path)
-        self.show_data()
+        show_data(self)
 #-----------------------------------------------------------------------
 def show_data(self,source=1):
     self.file_list.clear()
@@ -270,22 +273,31 @@ def search_files(self,source =1):
         reset_data(self)
         keyword = self.search_input.text().strip()
         self.info.setText(self.label[self.language]["message"])
-        if keyword:
+        if keyword :
             self.init = False
             self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip().lower())
-            for root, dirs, files in os.walk(self.search_path):
-                # Check if any file or folder name matches any part of the search pattern
-                for name in files + dirs:
-                    if self.logic_index == 0: #OR
-                        self.condition =any(part in name.lower() for part in self.keywords)
-                    elif self.logic_index == 1:#AND
-                        self.condition =all(part in name.lower() for part in self.keywords)
-                    else:#NOT
-                        self.condition =not all(part in name.lower() for part in self.keywords)
-                    if self.condition:
+            if  len(self.keywords)==1 and self.keywords[0] in ["*","*.*","."]:
+                for root, dirs, files in os.walk(self.search_path):
+                    for name in files + dirs:
                         if os.path.isfile(os.path.join(root, name)):
-                            self.found_files.append(os.path.join(root, name))
-                            self.found_folders.add(os.path.dirname(os.path.join(root, name)))             
+                                    self.found_files.append(os.path.join(root, name))
+                                    self.found_folders.add(os.path.dirname(os.path.join(root, name)))
+                        elif os.path.isdir(os.path.join(root, name)):
+                            self.found_folders.add(os.path.join(root, name))
+            else:
+                for root, dirs, files in os.walk(self.search_path):
+                    # Check if any file or folder name matches any part of the search pattern
+                    for name in files + dirs:
+                        if self.logic_index == 0: #OR
+                            self.condition =any(part in name.lower() for part in self.keywords)
+                        elif self.logic_index == 1:#AND
+                            self.condition =all(part in name.lower() for part in self.keywords)
+                        else:#NOT
+                            self.condition =not all(part in name.lower() for part in self.keywords)
+                        if self.condition:
+                            if os.path.isfile(os.path.join(root, name)):
+                                self.found_files.append(os.path.join(root, name))
+                                self.found_folders.add(os.path.dirname(os.path.join(root, name)))             
             # Filter by file type
             if self.search_type or len(self.search_type)>0:
                 self.found_files,folders = filter_type(self)
@@ -293,8 +305,9 @@ def search_files(self,source =1):
             self.filtered_files, self.filtered_folders = self.found_files, self.found_folders
             show_data(self,source)
         else:#Nothing selected 
-            self.file_list.clear()
-            self.folder_list.clear()
+            reset_data(self)
+            # self.file_list.clear()
+            # self.folder_list.clear()
             if not self.init:
                 show_empty(self)
 #----------------------------------------------------------------------
@@ -305,64 +318,90 @@ def clear_preview(self):
 def preview_file(self,path)    :
     ext = os.path.splitext(path)[1].lower()
     # Check supported types
-    #Check if it  is image, pdf
     supported_ext = [b"." + fmt for fmt in QImageReader.supportedImageFormats()]
     clear_preview(self)
-    #Check if it is plaintext
-    
-    # if ext.encode() in supported_ext:
-    #     self.preview_image(path)
-    # CAD_EXT = ['.step', '.stp', '.iges', '.igs']
     if ext.encode() in supported_ext:
-        preview_image(self,path)
+        preview_image(self, path)
     elif ext in TEXT_EXT:
-        self.preview_text(path)
+        preview_text(self,path)
     elif ext == ".docx":
-        self.preview_word(path)
+        preview_word(self,path)
     elif ext == ".xlsx":
-        self.preview_excel(path)
+        preview_excel(self,path)
     elif ext in CAD_EXT:
         self.preview.setText("[Cannot preview CAD file]")
     else:
         self.preview.setText("[Unsupported file type]")
-
-#---------------------------------------------------------------------
-def preview_image(self,path):
-    pixmap = QPixmap(path)
-    if pixmap.isNull():
-        self.preview.setText("[Cannot load image]")
-    else:
-        scaled = pixmap.scaled(self.preview.width(), self.preview.height(),
-                            Qt.KeepAspectRatio)
-        self.preview.setPixmap(scaled)
-        self.original_pixmap = pixmap   # ← store original full-quality image
-        self.update_scaled_image()
-#---------------------------------------------------------------------
+#----------------------------------------------------------------------
+def preview_image(self, filepath):
+        pixmap = QPixmap(filepath)
+        if pixmap.isNull():
+            self.preview.setText("[Cannot load image]")
+        else:
+            self.original_pixmap = pixmap   # ← store original full-quality image
+            update_scaled_image(self)
+#----------------------------------------------------------------------
 def update_scaled_image(self):
-    if self.original_pixmap is None:
-        return
+        if self.original_pixmap is None:
+            return
+        scaled = self.original_pixmap.scaled(
+            self.preview.width(),
+            self.preview.height(),
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation   # ← smoother resize!
+        )
+        self.preview.setPixmap(scaled)
+#----------------------------------------------------------------------
 
-    scaled = self.original_pixmap.scaled(
-        self.preview.width(),
-        self.preview.height(),
-        Qt.KeepAspectRatio,
-        Qt.SmoothTransformation   # ← smoother resize!
-    )
-    self.preview.setPixmap(scaled)
-
-#---------------------------------------------------------------------
+def preview_text(self, filepath):
+        try:
+            with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+            self.preview.setText(content)
+        except:
+            self.preview.setText("[Cannot read text file]")
+#----------------------------------------------------------------------
+def preview_word(self, filepath,max_lines=10):
+        from docx import Document
+        from docx.shared import Pt
+        try:
+            doc = Document(filepath)
+            text =""
+            for paragraph in doc.paragraphs:
+                for run in paragraph.runs:
+                    text += run.text +" "
+                text +="\n"
+                if max_lines and len(text.splitlines()) >= max_lines:
+                    break
+            text = text.rstrip()  # Remove trailing newline character
+            self.preview.setText(text.rstrip() if text else "[Empty Word document]")
+            self.preview.setAlignment(Qt.AlignLeft | Qt.AlignTop)  # Set alignment to left and top
+            self.preview.setTextInteractionFlags(Qt.NoTextInteraction)  # Disable text interaction
+        except:
+            self.preview.setText("[Cannot preview Word file]")
+            
+            
+            
+            
+#----------------------------------------------------------------------
+def preview_excel(self, filepath, max_rows=10):
+        try:
+            wb = openpyxl.load_workbook(filepath, read_only=True)
+            ws = wb.active
+            text = ""
+            for i, row in enumerate(ws.iter_rows(values_only=True)):
+                text += "\t".join([str(cell) if cell is not None else "" for cell in row]) + "\n"
+                if i + 1 >= max_rows:
+                    break
+            text = text.rstrip()  # Remove trailing newline character
+            self.preview.setText(text if text else "[Empty Excel sheet]")
+            self.preview.setAlignment(Qt.AlignLeft | Qt.AlignTop)  # Set alignment to left and top
+            self.preview.setTextInteractionFlags(Qt.NoTextInteraction)  # Disable text interaction
+        except:
+            self.preview.setText("[Cannot preview Excel file]")
+# -----------------------------------------
 def resizeEvent(self, event):
-    # if self.preview.pixmap():
-    #     pixmap = self.preview.pixmap()
-    #     scaled = pixmap.scaled(
-    #         self.preview.width(),
-    #         self.preview.height(),
-    #         Qt.KeepAspectRatio
-    #     )
-    #     self.preview.setPixmap(scaled)
     if hasattr(self, "original_pixmap") and self.original_pixmap:
         self.update_scaled_image()
     super().resizeEvent(event)
-#---------------------------------------------------------------------
-def preview_text(path):
-    pass
+#----------------------------------------------------------------------

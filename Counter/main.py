@@ -48,7 +48,7 @@ class MainForm(QWidget):
 
         # Counters
         self.elapsed = 0
-        self.limit_seconds = 10
+        self.limit_seconds = 100
         self.alphabet_index = 0
         self.alphabet = [chr(i) for i in range(ord("a"), ord("z") + 1)]
 
@@ -66,7 +66,7 @@ class MainForm(QWidget):
 
         # Start timers
         self.alphabet_timer.start(1000)   # ← alphabet loop EVERY 1 second
-        self.time_timer.start(1000)       # elapsed time every 1 second
+        self.time_timer.start(100)       # elapsed time every 1 second
 
     def update_alphabet(self):
         self.label.setText(self.alphabet[self.alphabet_index])

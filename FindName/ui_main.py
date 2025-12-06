@@ -36,14 +36,6 @@ class CheckForm(QWidget):
         self.show_hide_checkbox.stateChanged.connect(lambda state:toggle_password_visibility(self,self.show_hide_checkbox.checkState()))
 
 #------------------------------------------------------------------------------------------------
-
-class PreviewWidget(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.layout = QVBoxLayout(self)
-        self.label = QLabel("Preview")
-        self.layout.addWidget(self.label)
-#------------------------------------------------------------------------------------------------
 class FileSearch(QWidget):
     def __init__(self):
         super().__init__()
@@ -84,9 +76,8 @@ class FileSearch(QWidget):
         self.icon = self.resource_path("favicon.ico")
         self.setWindowIcon(QIcon(self.icon))
         self.setGeometry(100, 100, 500, 300)
-        layout = QVBoxLayout()
         layoutL = QVBoxLayout()
-        layoutH=QHBoxLayout()
+        layoutR = QVBoxLayout()
         
         #Languages choice
         lang_layout = QHBoxLayout()
@@ -192,11 +183,6 @@ class FileSearch(QWidget):
         self.cancel_button.setMaximumWidth(80)  # Won't grow beyond 80px
         layoutL.addWidget(self.cancel_button,alignment=Qt.AlignCenter)
         
-        splitter = QSplitter(Qt.Horizontal)
-        
-        left_panel = QWidget()
-        left_panel.setLayout(layoutL)
-        
         self.preview  = QLabel("Preview Area")
         self.preview.setStyleSheet("border: 1px solid gray;")
         self.preview.setMinimumHeight(250)
@@ -205,13 +191,17 @@ class FileSearch(QWidget):
         self.preview.setContentsMargins(0, 0, 0, 0)  # Remove margins to allow resizing
         self.preview.setAlignment(Qt.AlignCenter)
         
-        right_panel =QWidget()
-        right_layout = QVBoxLayout(right_panel)
-        right_layout.addWidget(self.preview)
+        layoutR.addWidget(self.preview)
         
         splitter = QSplitter(Qt.Horizontal)
+        left_panel = QWidget()
+        right_panel =QWidget()
+        
+        left_panel.setLayout(layoutL)
+        right_panel.setLayout(layoutR)
+
         splitter.addWidget(left_panel)
-        splitter.addWidget(self.preview)
+        splitter.addWidget(right_panel)
         splitter.setSizes([700, 300])
         
         main_layout = QVBoxLayout()

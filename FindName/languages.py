@@ -2,9 +2,9 @@
 
 #Title
 TITLE = {
-    "English": "FileSearch",
+    "English":"Search File",
     "Japanese": "ファイル検索",
-    "Vietnamese": "Search File"
+    "Vietnamese": "Tìm Tập Tin"
 }
 # Language Radio Button
 LANGUAGES ={"English":{"ENG":"English","JP":"Japanese","VN"  :"Vietnamese"},

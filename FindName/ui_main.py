@@ -2,7 +2,7 @@
 
 import os,sys
 from PySide6.QtWidgets import *
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt,QTimer
 from PySide6.QtGui import QIcon
 from actions import *
 from languages import *
@@ -40,19 +40,45 @@ class FileSearch(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
-    #-----------------------------------------------------------------------
-    def default_Values(self):
-        # import languages as lang
+    #---------------------------------------------------------------------------
+    def init_values(self):
         import platform
-        self.DEFAULT_LANGUAGE = "English"
-        self.APP_NAME = TITLE[self.DEFAULT_LANGUAGE]
         if platform.system() == "Windows":
             self.OS ="WIN"
         elif platform.system() == "Darwin":
             self.OS = "MAC"
         elif platform.system() == "Linux":
             self.OS = "LINUX"
-        self.language,self.search_path = self.get_default_values()
+        self.REG_KEY  = "FileSearch"
+        if self.OS =="WIN":
+            import winreg
+            try:
+                reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
+                language,default_path= winreg.QueryValueEx(reg_key, "Language"), winreg.QueryValueEx(reg_key, "SearchPath")
+                winreg.CloseKey(reg_key)
+                return language[0],default_path[0]
+            except FileNotFoundError:
+                return  "English",os.path.expanduser("~")
+        elif self.OS == "MAC":
+            # elif sys.platform == "darwin":
+            # macOS: use NSUserDefaults
+            # from Foundation import NSUserDefaults
+            # self.defaults = NSUserDefaults.alloc().initWithSuiteName_(f"com.mycompany.{self.REG_KEY}")
+            # self.defaults = NSUserDefaults.alloc().initWithSuiteName_(f"com.mycompany.FileSearchApp")
+            # language = self.defaults.stringForKey_("Language")
+            # default_path = self.defaults.stringForKey_("SearchPath")
+            # language = "English"
+            # default_path = "~"
+            # return language, default_path
+            return "English",os.path.expanduser("~")
+        else:
+            return "English",os.path.expanduser("~") 
+    #-----------------------------------------------------------------------
+    def default_values(self):
+        # import platform
+        self.language,self.search_path = self.init_values()
+        self.limit_timer  = 200
+        self.APP_NAME = TITLE[self.language]
         self.lang = LANGUAGES
         self.options = OPTIONS
         self.place_holder =PLACE_HOLDER
@@ -71,11 +97,13 @@ class FileSearch(QWidget):
         self.init =True
 #-----------------------------------------------------
     def initUI(self):
-        self.default_Values()
+        self.default_values()
         self.setWindowTitle(self.APP_NAME)
         self.icon = self.resource_path("favicon.ico")
         self.setWindowIcon(QIcon(self.icon))
         self.setGeometry(100, 100, 500, 300)
+        self.timer =QTimer()
+        
         layoutL = QVBoxLayout()
         layoutR = QVBoxLayout()
         
@@ -223,31 +251,6 @@ class FileSearch(QWidget):
             base_path = os.path.dirname(os.path.abspath(__file__))
         return os.path.join(base_path, relative_path)
     #---------------------------------------------------------------------------
-    def get_default_values(self):
-        self.name  = self.APP_NAME
-        if self.OS =="WIN":
-        # if platform.system() == "Windows":
-            import winreg
-            try:
-                reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.name}")
-                language,default_path= winreg.QueryValueEx(reg_key, "Language"), winreg.QueryValueEx(reg_key, "SearchPath")
-                winreg.CloseKey(reg_key)
-                return language[0],default_path[0]
-            except FileNotFoundError:
-                return  self.name,os.path.expanduser("~")
-        elif self.OS == "MAC":
-            pass
-        # elif sys.platform == "darwin":
-            # macOS: use NSUserDefaults
-            # from Foundation import NSUserDefaults
-            # self.defaults = NSUserDefaults.alloc().initWithSuiteName_(f"com.mycompany.{self.name}")
-            # self.defaults = NSUserDefaults.alloc().initWithSuiteName_(f"com.mycompany.FileSearchApp")
-            # language = self.defaults.stringForKey_("Language")
-            # default_path = self.defaults.stringForKey_("SearchPath")
-        language = "English"
-        default_path = "~"
-        return language, default_path
-#-----------------------------------------------------------------------+
 class FileSearchHandler(FileSearch):
     def __init__(self):
         super().__init__()

@@ -99,7 +99,7 @@ def saved_to_registry(self):
         
         if platform.system() == "Windows":
             import winreg
-            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.APP_NAME}")
+            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
             winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ, self.language)
             winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
             winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")

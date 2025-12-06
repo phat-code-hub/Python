@@ -1,11 +1,17 @@
 # ui_main.py
-# from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton
+
 import os,sys
 from PySide6.QtWidgets import *
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt,QTimer
 from PySide6.QtGui import QIcon
 from actions import *
 from languages import *
+
+class InitForm():
+    def __init__(self):
+        super().__init__()
+        self.OS ="WIN"
+        self.REG_KEY  = "FileSearch"
 class CheckForm(QWidget):
     def __init__(self):
         super().__init__()
@@ -36,31 +42,18 @@ class CheckForm(QWidget):
         self.show_hide_checkbox.stateChanged.connect(lambda state:toggle_password_visibility(self,self.show_hide_checkbox.checkState()))
 
 #------------------------------------------------------------------------------------------------
-
-class PreviewWidget(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.layout = QVBoxLayout(self)
-        self.label = QLabel("Preview")
-        self.layout.addWidget(self.label)
-#------------------------------------------------------------------------------------------------
 class FileSearch(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
-    #-----------------------------------------------------------------------
-    def default_Values(self):
-        # import languages as lang
-        import platform
-        self.DEFAULT_LANGUAGE = "English"
-        self.APP_NAME = TITLE[self.DEFAULT_LANGUAGE]
-        if platform.system() == "Windows":
-            self.OS ="WIN"
-        elif platform.system() == "Darwin":
-            self.OS = "MAC"
-        elif platform.system() == "Linux":
-            self.OS = "LINUX"
-        self.language,self.search_path = self.get_default_values()
+    #---------------------------------------------------------------------------
+    def default_values(self):
+        a_instance = InitForm()
+        self.OS = a_instance.OS
+        self.REG_KEY = a_instance.REG_KEY
+        self.language,self.search_path = get_registry_values(self)
+        self.limit_timer  = 200
+        self.APP_NAME = TITLE[self.language]
         self.lang = LANGUAGES
         self.options = OPTIONS
         self.place_holder =PLACE_HOLDER
@@ -74,18 +67,22 @@ class FileSearch(QWidget):
         self.type = TYPES
         self.ext_type = EXTENSIONS
         self.logics = LOGICS
+        self.readable_text_ext = TEXT_EXT
+        self.readable_cad_ext =CAD_EXT
         self.init =True
 #-----------------------------------------------------
     def initUI(self):
-        self.default_Values()
+        self.default_values()
         self.setWindowTitle(self.APP_NAME)
         self.icon = self.resource_path("favicon.ico")
         self.setWindowIcon(QIcon(self.icon))
         self.setGeometry(100, 100, 500, 300)
-        layout = QVBoxLayout()
+        
+        self.timer =QTimer()
+        
         layoutL = QVBoxLayout()
-        layoutH=QHBoxLayout()
-        splitter = QSplitter(Qt.Horizontal, self)
+        layoutR = QVBoxLayout()
+        
         #Languages choice
         lang_layout = QHBoxLayout()
         self.language_radio = QButtonGroup()
@@ -100,7 +97,6 @@ class FileSearch(QWidget):
         lang_layout.addWidget(self.vietnamese_radio)
         
         layoutL.addLayout(lang_layout)
-        # splitter.addWidget(lang_layout)
         
         self.japanese_radio.setChecked(True)
         #Folder Search path
@@ -117,8 +113,6 @@ class FileSearch(QWidget):
         search_folder_layout.addWidget(self.search_folder_change)
         
         layoutL.addLayout(search_folder_layout)
-        # splitter.addLayout(search_folder_layout)
-        
         # keyword input
         keyword_layout = QHBoxLayout()
         self.search_label = QLabel(self.label[self.language]["SearchKeyword"])
@@ -131,8 +125,6 @@ class FileSearch(QWidget):
         keyword_layout.addWidget(self.search_button)
         
         layoutL.addLayout(keyword_layout)
-        # splitter.addLayout(keyword_layout)
-        
         
         search_layout = QHBoxLayout()
         self.search_radio = QButtonGroup()
@@ -149,7 +141,6 @@ class FileSearch(QWidget):
         search_layout.addWidget(self.not_radio)
         
         layoutL.addLayout(search_layout)
-        # splitter.addLayout(search_layout)
         
         self.or_radio.setChecked(True)
         # Create the combo box for file types
@@ -164,8 +155,6 @@ class FileSearch(QWidget):
         self.file_type_combo.setCurrentIndex(0) # Set default selection to 'All'
         
         layoutL.addLayout(file_type_layout)
-        # splitter.addWidget(file_type_layout)
-        
         
         # Create the listbox for folders and files
         list_layout = QHBoxLayout()
@@ -184,7 +173,6 @@ class FileSearch(QWidget):
         list_layout.addLayout(file_layout) 
         
         layoutL.addLayout(list_layout)
-        # splitter.addWidget(list_layout)
         
         info_layout = QHBoxLayout()
         self.info_label = QLabel(self.label[self.language]["Info"])
@@ -194,13 +182,35 @@ class FileSearch(QWidget):
         info_layout.addWidget(self.info)
         
         layoutL.addLayout(info_layout)
-        # layoutH.addWidget(splitter)
         
         self.cancel_button = QPushButton(self.label[self.language]["Cancel"])
         self.cancel_button.setMaximumWidth(80)  # Won't grow beyond 80px
         layoutL.addWidget(self.cancel_button,alignment=Qt.AlignCenter)
-        self.setLayout(layoutL)
-        # self.setLayout(splitter)
+        
+        self.preview  = QLabel("Preview Area")
+        self.preview.setStyleSheet("border: 1px solid gray;")
+        self.preview.setMinimumHeight(250)
+        self.preview.setWordWrap(True)
+        self.preview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)  # Set size policy to expand in both directions
+        self.preview.setContentsMargins(0, 0, 0, 0)  # Remove margins to allow resizing
+        self.preview.setAlignment(Qt.AlignCenter)
+        
+        layoutR.addWidget(self.preview)
+        
+        splitter = QSplitter(Qt.Horizontal)
+        left_panel = QWidget()
+        right_panel =QWidget()
+        
+        left_panel.setLayout(layoutL)
+        right_panel.setLayout(layoutR)
+
+        splitter.addWidget(left_panel)
+        splitter.addWidget(right_panel)
+        splitter.setSizes([700, 300])
+        
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(splitter)
+        self.setLayout(main_layout)
     #---------------------------------------------------------------------------  
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
@@ -217,31 +227,6 @@ class FileSearch(QWidget):
             base_path = os.path.dirname(os.path.abspath(__file__))
         return os.path.join(base_path, relative_path)
     #---------------------------------------------------------------------------
-    def get_default_values(self):
-        self.name  = self.APP_NAME
-        if self.OS =="WIN":
-        # if platform.system() == "Windows":
-            import winreg
-            try:
-                reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.name}")
-                language,default_path= winreg.QueryValueEx(reg_key, "Language"), winreg.QueryValueEx(reg_key, "SearchPath")
-                winreg.CloseKey(reg_key)
-                return language[0],default_path[0]
-            except FileNotFoundError:
-                return  self.name,os.path.expanduser("~")
-        elif self.OS == "MAC":
-            pass
-        # elif sys.platform == "darwin":
-            # macOS: use NSUserDefaults
-            # from Foundation import NSUserDefaults
-            # self.defaults = NSUserDefaults.alloc().initWithSuiteName_(f"com.mycompany.{self.name}")
-            # self.defaults = NSUserDefaults.alloc().initWithSuiteName_(f"com.mycompany.FileSearchApp")
-            # language = self.defaults.stringForKey_("Language")
-            # default_path = self.defaults.stringForKey_("SearchPath")
-        language = "English"
-        default_path = "~"
-        return language, default_path
-#-----------------------------------------------------------------------+
 class FileSearchHandler(FileSearch):
     def __init__(self):
         super().__init__()

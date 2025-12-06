@@ -2,9 +2,9 @@
 
 #Title
 TITLE = {
-    "English": "FileSearch",
+    "English":"Search File",
     "Japanese": "ファイル検索",
-    "Vietnamese": "Search File"
+    "Vietnamese": "Tìm Tập Tin"
 }
 # Language Radio Button
 LANGUAGES ={"English":{"ENG":"English","JP":"Japanese","VN"  :"Vietnamese"},
@@ -81,9 +81,9 @@ HINT ={
     "Dialog" :{"English":"Click to change search folder",
             "Japanese":"クリックして検索フォルダを変更",
             "Vietnamese":"Click để thay đổi đường dẫn tìm kiếm"},
-    "Search":{"English":"Multiple keywords are separated by ',:;' or spaces",
-                "Japanese":"複数のキーワードは半角で英字、数字、記号とし',:;'または空白で区切って入力",
-                "Vietnamese":"Các từ khóa cách nhau bởi ',:;' hoặc khoảng trắng"},
+    "Search":{"English":"Multiple keywords are separated by ',:;' or spaces, '*' for show all",
+                "Japanese":"複数のキーワードは半角で英字、数字、記号とし',:;'または空白で区切って入力,'*'は全て表示",
+                "Vietnamese":"Các từ khóa cách nhau bởi ',:;' hoặc khoảng trắng,'*' để hiển thị tất cả"},
     "Logic" : {"English":
                 {
                 0: "Any of the keywords matches",
@@ -124,14 +124,25 @@ EXTENSIONS ={
     3: [".xl",".xlsx",".xlsm",".xlsb",".xltx",".xltm",".xlt",".csv",".numbers"],
     4: [".pdf"],
     5: ["dxf"],
-    6: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg"],
+    6: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg","png"],
     7: [".mp4", ".avi", ".mkv", ".mov", ".wmv"],
     8: [ ".doc", ".docx", ".odt", ".rtf",".dot","docm","dotx"],
-    9: [".txt", ".doc", ".docx", ".odt", ".rtf",".ini",".log" ,".csv" ,".json"],
+    9: [".txt", ".doc", ".docx", ".odt", ".rtf",".ini",".log" ,".csv" ,
+        ".md",".yml",".yaml",".json"],
     10: [".mp3", ".wav", ".aac", ".flac", ".ogg"],
     11: [".exe", ".msi", ".bat", ".cmd",".pkg",".sh", ".app", ".jar", ".py", ".pyw", ".pyc"]
     }
-
+TEXT_EXT = [
+        ".txt",
+        ".ini",
+        ".md",
+        ".csv",
+        ".yml",
+        ".yaml",
+        ".log",
+        ".json"
+    ]
+CAD_EXT = ['.vwx', '.dwg', '.dxf']
 LOGICS ={
     "OR":0,
     "AND":1,

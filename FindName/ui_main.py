@@ -6,6 +6,11 @@ from PySide6.QtCore import Qt,QTimer
 from PySide6.QtGui import QIcon
 from actions import *
 from languages import *
+
+class InitForm():
+    def __init__(self):
+        super().__init__()
+        self.OS ="WIN"
 class CheckForm(QWidget):
     def __init__(self):
         super().__init__()
@@ -97,6 +102,8 @@ class FileSearch(QWidget):
         self.init =True
 #-----------------------------------------------------
     def initUI(self):
+        a_instance = InitForm()
+        self.OS = a_instance.OS
         self.default_values()
         self.setWindowTitle(self.APP_NAME)
         self.icon = self.resource_path("favicon.ico")

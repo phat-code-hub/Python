@@ -2,7 +2,7 @@
 #--------------------------------------------------------------------------------------
 import os
 import sys
-import platform
+# import platform
 import openpyxl
 from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit
 from PySide6.QtCore import Qt,QUrl
@@ -15,7 +15,7 @@ from PySide6.QtGui import QPixmap,QImageReader
 
 def check_registration(self):
     passed = False
-    if platform.system() == "Windows":
+    if self.OS == "WIN":
         import winreg
         try:
             reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\\FileSearch")
@@ -23,14 +23,14 @@ def check_registration(self):
             if is_passed[0] == "True":
                 passed = True
             winreg.CloseKey(reg_key)    
-            self.OS = "WIN"
+            # self.OS = "WIN"
         except Exception:
             passed=False
-    elif platform.system() == "Darwin":
-        self.OS = "MAC"
+    elif self.OS == "MAC":
         pass
-    else:
-        self.OS = "LINUX"
+    else: 
+        # self.OS = "LINUX"
+        pass
     return passed
 #--------------------------------------------------------------------------------------
 def toggle_password_visibility(self,state):

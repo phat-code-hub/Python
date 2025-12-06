@@ -10,11 +10,11 @@ class TimePopup(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Elapsed Time")
-        self.setWindowFlags(Qt.Tool | Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
 
         self.label = QLabel("Elapsed: 0s")
-        self.label.setStyleSheet("font-size: 18px; padding: 10px;")
-
+        self.label.setStyleSheet("font-size: 18px; padding: 10px;color:black")
+        self.setStyleSheet("background-color: #f0f0f0;")
         layout = QVBoxLayout()
         layout.addWidget(self.label)
         self.setLayout(layout)

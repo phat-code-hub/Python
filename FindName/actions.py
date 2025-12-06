@@ -303,7 +303,7 @@ def start_process(self):
     # Show popup
     self.popup.update_time(0)
     self.popup.show()
-    self.timer.start(100)
+    self.timer.start(0)
 #-----------------------------------------------------------------------
 def update_time_counter(self):
     self.elapsed += 1

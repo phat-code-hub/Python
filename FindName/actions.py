@@ -13,7 +13,7 @@ from PySide6.QtGui import QPixmap,QImageReader
 
 #--------------------------------------------------------------------------------------
 
-def check_registration():
+def check_registration(self):
     passed = False
     if platform.system() == "Windows":
         import winreg
@@ -23,10 +23,14 @@ def check_registration():
             if is_passed[0] == "True":
                 passed = True
             winreg.CloseKey(reg_key)    
+            self.OS = "WIN"
         except Exception:
             passed=False
     elif platform.system() == "Darwin":
+        self.OS = "MAC"
         pass
+    else:
+        self.OS = "LINUX"
     return passed
 #--------------------------------------------------------------------------------------
 def toggle_password_visibility(self,state):
@@ -130,7 +134,8 @@ def change_search_source(self,source =1):
                 self.search_path = os.path.join(self.search_path,self.folder_list.selectedItems()[0].text())
         self.search_folder_path.setText(self.search_path)
         self.info.setText(self.label[self.language]["message"])
-        search_files(self,source = source)
+        # search_files(self,source = source)
+        self.popup()
     else:
         if not self.init:
             show_empty(self)

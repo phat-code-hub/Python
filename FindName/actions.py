@@ -23,7 +23,6 @@ def check_registration(self):
             if is_passed[0] == "True":
                 passed = True
             winreg.CloseKey(reg_key)    
-            # self.OS = "WIN"
         except Exception:
             passed=False
     elif self.OS == "MAC":
@@ -51,18 +50,59 @@ def check_password(self,password):
         QMessageBox.critical(None, "Error", "Incorrect password.")
         self.close()
 #--------------------------------------------------------------------------------------
-def create_registry(self):
-        if platform.system() == "Windows":
+def get_registry_values(self):
+        if self.OS =="WIN":
             import winreg
-            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\FileSearch")
+            try:
+                reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
+                language,default_path= winreg.QueryValueEx(reg_key, "Language"), winreg.QueryValueEx(reg_key, "SearchPath")
+                winreg.CloseKey(reg_key)
+                return language[0],default_path[0]
+            except FileNotFoundError:
+                return  "English",os.path.expanduser("~")
+        elif self.OS == "MAC":
+            # elif sys.platform == "darwin":
+            # macOS: use NSUserDefaults
+            # from Foundation import NSUserDefaults
+            # self.defaults = NSUserDefaults.alloc().initWithSuiteName_(f"com.mycompany.{self.REG_KEY}")
+            # language = self.defaults.stringForKey_("Language")
+            # default_path = self.defaults.stringForKey_("SearchPath")
+            # language = "English"
+            # default_path = "~"
+            # return language, default_path
+            return "English",os.path.expanduser("~")
+        else:
+            return "English",os.path.expanduser("~")
+#----------------------------------------------------------------
+def create_registry(self):
+        if self.OS == "WIN":
+            import winreg
+            # reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\FileSearch")
+            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
             winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ,"English")
             winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, os.path.expanduser("~")+"\\Documents")
             winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
             winreg.CloseKey(reg_key)
-        elif platform.system() == "Darwin":
+        elif self.OS == "MAC":
             # macOS: use NSUserDefaults
             pass
+        else:
+            pass
 #----------------------------------------------------------------   
+def saved_to_registry(self):
+        if self.OS == "WIN":
+            import winreg
+            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
+            winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ, self.language)
+            winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
+            winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
+            winreg.CloseKey(reg_key)
+        elif self.OS == "MAC":
+            # macOS: use NSUserDefaults
+            pass
+        else:
+            pass
+#----------------------------------------------------------------
 def change_language(self):
     langs,labels,types,search =LANGUAGES,LABELS,TYPES,OPTIONS
     
@@ -99,20 +139,7 @@ def change_language(self):
 
 
 #----------------------------------------------------------------   
-def saved_to_registry(self):
-        
-        if platform.system() == "Windows":
-            import winreg
-            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
-            winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ, self.language)
-            winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
-            winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
-            winreg.CloseKey(reg_key)
-        elif platform.system() == "Darwin":
-            # macOS: use NSUserDefaults
-            pass
-        
-#----------------------------------------------------------------
+
 def open_file_dialog(self):
     select_folder = self.label[self.language]["SelectFolder"]
     folder_path = QFileDialog.getExistingDirectory(self, select_folder,self.search_path)
@@ -134,8 +161,8 @@ def change_search_source(self,source =1):
                 self.search_path = os.path.join(self.search_path,self.folder_list.selectedItems()[0].text())
         self.search_folder_path.setText(self.search_path)
         self.info.setText(self.label[self.language]["message"])
-        # search_files(self,source = source)
-        self.popup()
+        search_files(self,source = source)
+        # self.popup()
     else:
         if not self.init:
             show_empty(self)

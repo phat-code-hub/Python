@@ -12,6 +12,7 @@ class InitForm():
         super().__init__()
         self.OS ="WIN"
         self.REG_KEY  = "FileSearch"
+#---------------------------------------------------------------------------
 class CheckForm(QWidget):
     def __init__(self):
         super().__init__()
@@ -42,17 +43,34 @@ class CheckForm(QWidget):
         self.show_hide_checkbox.stateChanged.connect(lambda state:toggle_password_visibility(self,self.show_hide_checkbox.checkState()))
 
 #------------------------------------------------------------------------------------------------
+class TimePopup(QDialog):
+    """Popup window showing elapsed time — no buttons."""
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Elapsed Time")
+        self.setWindowFlags(Qt.Tool | Qt.WindowStaysOnTopHint)
+
+        self.label = QLabel("Elapsed: 0s")
+        self.label.setStyleSheet("font-size: 18px; padding: 10px;")
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.label)
+        self.setLayout(layout)
+
+    def update_time(self, sec):
+        self.label.setText(f"Elapsed: {sec}s")
+#---------------------------------------------------------------------------
 class FileSearch(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
     #---------------------------------------------------------------------------
     def default_values(self):
+        self.limit_timer  = 200
         a_instance = InitForm()
         self.OS = a_instance.OS
         self.REG_KEY = a_instance.REG_KEY
         self.language,self.search_path = get_registry_values(self)
-        self.limit_timer  = 200
         self.APP_NAME = TITLE[self.language]
         self.lang = LANGUAGES
         self.options = OPTIONS
@@ -245,6 +263,7 @@ class FileSearchHandler(FileSearch):
         #initialize values
         self.search_folder_path.setText(self.search_path)
         self.search_type = self.ext_type[self.type_index]
+        self.popup = TimePopup()
         reset_data(self)
         self.connect_signals()
         change_logic(self)

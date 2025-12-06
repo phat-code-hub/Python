@@ -2,7 +2,6 @@
 #--------------------------------------------------------------------------------------
 import os
 import sys
-# import platform
 import openpyxl
 from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit
 from PySide6.QtCore import Qt,QUrl
@@ -161,8 +160,8 @@ def change_search_source(self,source =1):
                 self.search_path = os.path.join(self.search_path,self.folder_list.selectedItems()[0].text())
         self.search_folder_path.setText(self.search_path)
         self.info.setText(self.label[self.language]["message"])
+        start_process(self)
         search_files(self,source = source)
-        # self.popup()
     else:
         if not self.init:
             show_empty(self)
@@ -299,6 +298,27 @@ def filter_type(self):
                 filtered_folders.add(dirname)
     return filtered_files, filtered_folders
 #-----------------------------------------------------------------------
+def start_process(self):
+    self.elapsed = 0
+    # Show popup
+    self.popup.update_time(0)
+    self.popup.show()
+    self.timer.start(100)
+#-----------------------------------------------------------------------
+def update_time_counter(self):
+    self.elapsed += 1
+    self.popup.update_time(self.elapsed)
+
+    if self.elapsed >= self.limit_timer:
+        self.stop_all()
+#-----------------------------------------------------------------------      
+
+def stop_all(self):
+    self.alphabet_timer.stop()
+    self.time_timer.stop()
+    self.popup.close()
+    self.btn.setEnabled(True)
+#-----------------------------------------------------------------------
 def search_files(self,source =1):
     import re
     if source == 1:
@@ -306,6 +326,7 @@ def search_files(self,source =1):
         keyword = self.search_input.text().strip()
         self.info.setText(self.label[self.language]["message"])
         if keyword :
+            update_time_counter(self)
             self.init = False
             self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip().lower())
             if  len(self.keywords)==1 and self.keywords[0] in ["*","*.*","."]:

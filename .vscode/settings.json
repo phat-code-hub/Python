@@ -32,24 +32,25 @@
     "aiCodePro.localLLMEndpoint": "http://localhost:11434",
     "aiCodePro.defaultPersonality": "buzzy",
 
-    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
 
-    "terminal.integrated.automationProfile.windows": {},
 
     "terminal.integrated.profiles.windows": {
-        "PowerShell": {
-            "source": "PowerShell",
-            "icon": "terminal-powershell"
-        },
-        "Git Bash": {
-            "source": "Git Bash"
-        },
         "Command Prompt": {
             "path": "C:\\Windows\\System32\\cmd.exe",
             "icon": "terminal-cmd"
-        }
-    },
+        },
+          "Git Bash": {
+            "source": "Git Bash"
+        },
+        "PowerShell": {
+           "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\Powershell.exe",
+            "icon": "terminal-powershell"
+        },
 
+    },
+    "terminal.integrated.useWslProfiles": false,
+    "terminal.integrated.allowChords": false,
     "auto-rename-tag.activationOnLanguage": [
         "*"
     ]

@@ -314,10 +314,8 @@ def update_time_counter(self):
 #-----------------------------------------------------------------------      
 
 def stop_all(self):
-    self.alphabet_timer.stop()
-    self.time_timer.stop()
+    self.timer.stop()
     self.popup.close()
-    self.btn.setEnabled(True)
 #-----------------------------------------------------------------------
 def search_files(self,source =1):
     import re
@@ -363,6 +361,7 @@ def search_files(self,source =1):
             # self.folder_list.clear()
             if not self.init:
                 show_empty(self)
+    stop_all(self)
 #----------------------------------------------------------------------
 def clear_preview(self):
     self.preview.clear()

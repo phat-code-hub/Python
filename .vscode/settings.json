@@ -1,6 +1,7 @@
 {
     "python-envs.defaultEnvManager": "ms-python.python:system",
     "python-envs.pythonProjects": [],
+
     "cSpell.words": [
         "Chọn",
         "hoặc",
@@ -20,28 +21,36 @@
         "UEDA",
         "Việt"
     ],
+
     "aiCodePro.preferredModels": [
-    "codellama:7b",
-    "deepseek-coder:6.7b",
-    "dolphin-mixtral:8x7b",
-    "mistral:7b",
+        "codellama:7b",
+        "deepseek-coder:6.7b",
+        "dolphin-mixtral:8x7b",
+        "mistral:7b"
     ],
+
     "aiCodePro.localLLMEndpoint": "http://localhost:11434",
     "aiCodePro.defaultPersonality": "buzzy",
-    "terminal.integrated.automationProfile.windows": {},
-    "terminal.integrated.profiles.windows": {
 
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+
+    "terminal.integrated.automationProfile.windows": {},
+
+    "terminal.integrated.profiles.windows": {
         "PowerShell": {
             "source": "PowerShell",
             "icon": "terminal-powershell"
         },
         "Git Bash": {
             "source": "Git Bash"
+        },
+        "Command Prompt": {
+            "path": "C:\\Windows\\System32\\cmd.exe",
+            "icon": "terminal-cmd"
         }
     },
+
     "auto-rename-tag.activationOnLanguage": [
-        
         "*"
-    ],
- 
+    ]
 }

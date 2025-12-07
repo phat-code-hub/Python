@@ -12,7 +12,7 @@ class InitInfo():
         super().__init__()
         self.REG_KEY  = "FileSearch"
         self.OS,self.LANG =check_PC(self)
-        # self.LANG  ="Japanese"
+        # self.LANG  ="Vietnamese"
 #---------------------------------------------------------------------------
 class CheckForm(QWidget):
     def __init__(self):

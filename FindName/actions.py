@@ -5,11 +5,11 @@ import sys
 import openpyxl
 import platform
 import ui_main
+from  languages import ERROR
 from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit,QApplication
 from PySide6.QtCore import Qt,QUrl
 from languages import *
-from PySide6.QtGui import QFontMetrics,QDesktopServices
-from PySide6.QtGui import QPixmap,QImageReader
+from PySide6.QtGui import QFontMetrics,QDesktopServices,QPixmap,QImageReader 
 
 #--------------------------------------------------------------------------------------
 def check_PC(self):
@@ -95,7 +95,6 @@ def check_registration(self): #For UnitFrom
                 self.PATH = winreg.QueryValueEx(reg_key, "SearchPath")
             winreg.CloseKey(reg_key)
         except Exception:
-            # passed=False
             pass
     elif self.OS == "MAC":
         pass
@@ -109,7 +108,7 @@ def toggle_password_visibility(self,state):
     else:
         self.password_input.setEchoMode(QLineEdit.Password)
 #--------------------------------------------------------------------------------------
-def check_password(self,password):
+def check_license(self,password):
     import re
     # if re.match(r"^0\w*",password):
     # if ("11" in password) and ("3" in password):
@@ -118,7 +117,7 @@ def check_password(self,password):
         create_registry(self)
         ui_main.FileSearchHandler().show()
     else:
-        QMessageBox.critical(None, "Error", "Incorrect password.")
+        QMessageBox.critical(None, ERROR[self.LANG]["Title"],ERROR[self.LANG]["Message"])
         self.close()
 #--------------------------------------------------------------------------------------
 def move_to_center(self):
@@ -246,7 +245,10 @@ def change_search_source(self,source =1):
             else:
                 self.search_path = os.path.join(self.search_path,self.folder_list.selectedItems()[0].text())
         self.search_folder_path.setText(self.search_path)
-        self.info.setText(self.label[self.language]["message"])
+        if self.init:
+            self.init = False
+        if not self.init:
+            self.info.setText(self.label[self.language]["message"])
         start_process(self)
         search_files(self,source = source)
     else:
@@ -294,15 +296,15 @@ def open_file_location(self,item):
     import subprocess
     filepath = os.path.dirname(self.found_files[self.file_list.row(item)])
     try:
-        # --- use one unified method ---
-        if sys.platform.startswith("win"):
+        if self.OS == "WIN":
+        # if sys.platform.startswith("win"):
             QDesktopServices.openUrl(QUrl.fromLocalFile(filepath))
-        elif sys.platform.startswith("darwin"):
+        elif self.OS == "MAC":
             subprocess.run(["open", filepath])
         else:  # Linux and others
             subprocess.run(["xdg-open", filepath])
     except Exception as e:
-        QMessageBox.critical(self, "Error", f"Failed to open folder:\n{e}")
+        QMessageBox.critical(self, "Error", f"{ERROR[self.language]["Open"]}:\n{e}")
 #-----------------------------------------------------------------------   
 def change_tooltips(self):
     self.search_folder_change.setToolTip(HINT["Dialog"][self.language])

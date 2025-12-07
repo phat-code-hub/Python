@@ -18,7 +18,20 @@ LICENSE ={
                 "Button": "Kiểm tra"
                 }
 }
-
+ERROR ={
+    "English": {"Title": "Error",
+                "Message": "Invalid license key!",
+                "Open":"Failed to open folder!",
+                },
+    "Japanese": {"Title": "エラー",
+                "Message": "不正なライセンスキー!",
+                "Open":"フォルダを開けません!",
+                },
+    "Vietnamese": {"Title": "Lỗi",
+                "Message": "Bản quyền không hợp lệ!",
+                "Open":"Không thể truy cập thư mục!",
+                },
+}
 #Title
 TITLE = {
     "English":"Search File",

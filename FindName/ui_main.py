@@ -12,7 +12,7 @@ class InitInfo():
         super().__init__()
         self.REG_KEY  = "FileSearch"
         self.OS,self.LANG =check_PC(self)
-        # check_PC(self)
+        # self.LANG  ="Japanese"
 #---------------------------------------------------------------------------
 class CheckForm(QWidget):
     def __init__(self):
@@ -20,43 +20,42 @@ class CheckForm(QWidget):
         self.REG_KEY = InitInfo().REG_KEY
         self.OS = InitInfo().OS
         self.LANG = InitInfo().LANG
-        # self.setWindowTitle("Password Check")
         self.setWindowTitle(LICENSE[self.LANG]["Title"])
         self.setGeometry(100, 100, 300, 150)
         self.setup_ui()
         move_to_center(self)
     def setup_ui(self):
         layout = QVBoxLayout()
-        self.label = QLabel("Enter your password:")
+        self.label = QLabel(LICENSE[self.LANG]["Prompt"])
         layout.addWidget(self.label)
 
         self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.Password)
         layout.addWidget(self.password_input)
 
-        self.show_hide_checkbox = QCheckBox("Show/Hide")
-        
+        self.show_hide_checkbox = QCheckBox(LICENSE[self.LANG]["Display"])
         layout.addWidget(self.show_hide_checkbox)
         
-        self.check_button = QPushButton("Check Password")
+        self.check_button = QPushButton(LICENSE[self.LANG]["Button"])
         layout.addWidget(self.check_button)
 
         self.setLayout(layout)
-        # Connect the button to the check_password function
-        self.check_button.clicked.connect(lambda pw:check_password(self,self.password_input.text().strip().lower()))
-        self.password_input.returnPressed.connect(lambda pw:check_password(self,self.password_input.text().strip().lower()))
+        # Connect the button to the check_license function
+        self.check_button.clicked.connect(lambda pw:check_license(self,self.password_input.text().strip().lower()))
+        self.password_input.returnPressed.connect(lambda pw:check_license(self,self.password_input.text().strip().lower()))
         self.show_hide_checkbox.stateChanged.connect(lambda state:toggle_password_visibility(self,self.show_hide_checkbox.checkState()))
 
 #------------------------------------------------------------------------------------------------
 class TimePopup(QDialog):
+    
     """Popup window showing elapsed time — no buttons."""
     def __init__(self):
         super().__init__()
         move_to_center(self)
         self.setWindowTitle(InitInfo().REG_KEY)
         self.setWindowFlags(Qt.Tool | Qt.WindowStaysOnTopHint)
-        # self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.label = QLabel("Searching..., please wait")
+        # self.label = QLabel("Searching..., please wait")
+        self.label = QLabel()
         self.label.setStyleSheet("font-size: 18px; padding: 10px;color:black")
         self.setStyleSheet("background-color: #f0f0f0;")
         
@@ -65,7 +64,7 @@ class TimePopup(QDialog):
         self.setLayout(layout)
 
     def update_time(self):
-        self.label.setText("Searching..., please wait")
+        self.label.setText(LABELS[self.LANG]["message"])
 #---------------------------------------------------------------------------
 class FileSearch(QWidget):
     def __init__(self):
@@ -77,8 +76,6 @@ class FileSearch(QWidget):
         self.limit_timer  = 200
         self.REG_KEY = InitInfo().REG_KEY
         self.OS = InitInfo().OS
-        # self.language = InitInfo().LANG
-        # self.search_path = InitInfo().PATH
         self.language,self.search_path = get_registry_values(self)
         self.APP_NAME = TITLE[self.language]
         self.lang = LANGUAGES

@@ -146,6 +146,15 @@ def get_registry_values(self):
             except FileNotFoundError:
                 return  "English",os.path.expanduser("~")
         elif self.OS == "MAC":
+            import Foundation # type: ignore
+            defaults = Foundation.NSSearchPathForDirectoriesInDomains_(Foundation.NSUserDomainMask, True, True)
+            if defaults:
+                default_path = defaults[0]
+                return "English", default_path
+            else:
+                return "English", os.path.expanduser("~")
+                
+            
             # elif sys.platform == "darwin":
             # macOS: use NSUserDefaults
             # from Foundation import NSUserDefaults
@@ -170,9 +179,18 @@ def create_registry(self):
             winreg.CloseKey(reg_key)
         elif self.OS == "MAC":
             # macOS: use NSUserDefaults
-            pass
+            import Foundation # type: ignore
+            defaults = Foundation.NSSearchPathForDirectoriesInDomains_(Foundation.NSUserDomainMask, True, True)
+            if defaults:
+                default_path = defaults[0]
+                defaults = Foundation.NSUserDefaults.standardUserDefaults()
+                defaults.setValue("English", forKey="Language")
+                defaults.setValue(default_path, forKey="SearchPath")
+                defaults.synchronize()
         else:
-            pass
+            import os
+            os.environ["LANGUAGE"] = "English"
+            os.environ["SEARCH_PATH"] = os.path.expanduser("~") + "/Documents"
 #----------------------------------------------------------------   
 def saved_to_registry(self):
         if self.OS == "WIN":
@@ -184,9 +202,18 @@ def saved_to_registry(self):
             winreg.CloseKey(reg_key)
         elif self.OS == "MAC":
             # macOS: use NSUserDefaults
-            pass
+            import Foundation # type: ignore
+            defaults = Foundation.NSSearchPathForDirectoriesInDomains_(Foundation.NSUserDomainMask, True, True)
+            if defaults:
+                default_path = defaults[0]
+                defaults = Foundation.NSUserDefaults.standardUserDefaults()
+                defaults.setValue(self.language, forKey="Language")
+                defaults.setValue(self.search_path, forKey="SearchPath")
+                defaults.synchronize()
         else:
-            pass
+            import os
+            os.environ["LANGUAGE"] = self.language
+            os.environ["SEARCH_PATH"] = self.search_path
 #----------------------------------------------------------------
 def change_language(self):
     langs,labels,types,search =LANGUAGES,LABELS,TYPES,OPTIONS

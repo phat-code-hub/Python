@@ -233,7 +233,7 @@ def open_file_dialog(self):
         self.search_folder_path.setText(folder_path)
         search_files(self)
     else:
-        show_empty()
+        show_empty(self)
 #----------------------------------------------------------------
 #Search from search pattern
 def change_search_source(self,source =1):
@@ -249,7 +249,7 @@ def change_search_source(self,source =1):
             self.init = False
         if not self.init:
             self.info.setText(self.label[self.language]["message"])
-        start_process(self)
+        # start_process(self)
         search_files(self,source = source)
     else:
         if not self.init:
@@ -413,7 +413,7 @@ def search_files(self,source =1):
         keyword = self.search_input.text().strip()
         self.info.setText(self.label[self.language]["message"])
         if keyword :
-            update_time_counter(self)
+            # update_time_counter(self)
             self.init = False
             self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip().lower())
             if  len(self.keywords)==1 and self.keywords[0] in ["*","*.*","."]:

@@ -47,19 +47,20 @@ class TimePopup(QDialog):
     """Popup window showing elapsed time — no buttons."""
     def __init__(self):
         super().__init__()
-        # self.setWindowTitle("Elapsed Time")
-        # self.setWindowFlags(Qt.Tool | Qt.WindowStaysOnTopHint)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.label = QLabel("Elapsed: 0s")
+        b_instance = InitForm()
+        self.setWindowTitle(b_instance.REG_KEY)
+        self.setWindowFlags(Qt.Tool | Qt.WindowStaysOnTopHint)
+        # self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.label = QLabel("Searching..., please wait")
-        self.label.setStyleSheet("font-size: 18px; padding: 10px;")
-
+        self.label.setStyleSheet("font-size: 18px; padding: 10px;color:black")
+        self.setStyleSheet("background-color: #f0f0f0;")
+        
         layout = QVBoxLayout()
         layout.addWidget(self.label)
         self.setLayout(layout)
 
-    def update_time(self, sec):
-        self.label.setText(f"Elapsed: {sec}s")
+    def update_time(self):
+        self.label.setText("Searching..., please wait")
 #---------------------------------------------------------------------------
 class FileSearch(QWidget):
     def __init__(self):

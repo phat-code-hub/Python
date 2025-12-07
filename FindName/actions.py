@@ -17,7 +17,8 @@ def check_registration(self):
     if self.OS == "WIN":
         import winreg
         try:
-            reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\\FileSearch")
+            # reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\\FileSearch")
+            reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
             is_passed = winreg.QueryValueEx(reg_key, "Passed")
             if is_passed[0] == "True":
                 passed = True
@@ -26,8 +27,7 @@ def check_registration(self):
             passed=False
     elif self.OS == "MAC":
         pass
-    else: 
-        # self.OS = "LINUX"
+    else: #self.OS = "LINUX"
         pass
     return passed
 #--------------------------------------------------------------------------------------
@@ -357,8 +357,6 @@ def search_files(self,source =1):
             show_data(self,source)
         else:#Nothing selected 
             reset_data(self)
-            # self.file_list.clear()
-            # self.folder_list.clear()
             if not self.init:
                 show_empty(self)
     stop_all(self)

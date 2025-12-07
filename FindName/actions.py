@@ -237,7 +237,6 @@ def open_file_dialog(self):
 #----------------------------------------------------------------
 #Search from search pattern
 def change_search_source(self,source =1):
-    # self.init = True
     if self.search_input.text().strip() :
         if source == 2:
             if self.folder_list.currentItem() is None:
@@ -406,48 +405,47 @@ def stop_all(self):
     self.timer.stop()
     self.popup.close()
 #-----------------------------------------------------------------------
-def search_files(self,source =1):
+def search_files(self,source = 1):
     import re
-    if source == 1:
-        reset_data(self)
-        keyword = self.search_input.text().strip()
-        self.info.setText(self.label[self.language]["message"])
-        if keyword :
-            # update_time_counter(self)
-            self.init = False
-            self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip().lower())
-            if  len(self.keywords)==1 and self.keywords[0] in ["*","*.*","."]:
-                for root, dirs, files in os.walk(self.search_path):
-                    for name in files + dirs:
-                        if os.path.isfile(os.path.join(root, name)):
-                                    self.found_files.append(os.path.join(root, name))
-                                    self.found_folders.add(os.path.dirname(os.path.join(root, name)))
-                        elif os.path.isdir(os.path.join(root, name)):
-                            self.found_folders.add(os.path.join(root, name))
-            else:
-                for root, dirs, files in os.walk(self.search_path):
-                    # Check if any file or folder name matches any part of the search pattern
-                    for name in files + dirs:
-                        if self.logic_index == 0: #OR
-                            self.condition =any(part in name.lower() for part in self.keywords)
-                        elif self.logic_index == 1:#AND
-                            self.condition =all(part in name.lower() for part in self.keywords)
-                        else:#NOT
-                            self.condition =not all(part in name.lower() for part in self.keywords)
-                        if self.condition:
-                            if os.path.isfile(os.path.join(root, name)):
+    reset_data(self)
+    keyword = self.search_input.text().strip()
+    self.info.setText(self.label[self.language]["message"])
+    if keyword :
+        # update_time_counter(self)
+        self.init = False
+        self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip().lower())
+        if  len(self.keywords)==1 and self.keywords[0] in ["*","*.*","."]:
+            for root, dirs, files in os.walk(self.search_path):
+                for name in files + dirs:
+                    if os.path.isfile(os.path.join(root, name)):
                                 self.found_files.append(os.path.join(root, name))
-                                self.found_folders.add(os.path.dirname(os.path.join(root, name)))             
-            # Filter by file type
-            if self.search_type or len(self.search_type)>0:
-                self.found_files,folders = filter_type(self)
-                self.found_folders = folders.intersection(self.found_folders)
-            self.filtered_files, self.filtered_folders = self.found_files, self.found_folders
-            show_data(self,source)
-        else:#Nothing selected 
-            reset_data(self)
-            if not self.init:
-                show_empty(self)
+                                self.found_folders.add(os.path.dirname(os.path.join(root, name)))
+                    elif os.path.isdir(os.path.join(root, name)):
+                        self.found_folders.add(os.path.join(root, name))
+        else:
+            for root, dirs, files in os.walk(self.search_path):
+                # Check if any file or folder name matches any part of the search pattern
+                for name in files + dirs:
+                    if self.logic_index == 0: #OR
+                        self.condition =any(part in name.lower() for part in self.keywords)
+                    elif self.logic_index == 1:#AND
+                        self.condition =all(part in name.lower() for part in self.keywords)
+                    else:#NOT
+                        self.condition =not all(part in name.lower() for part in self.keywords)
+                    if self.condition:
+                        if os.path.isfile(os.path.join(root, name)):
+                            self.found_files.append(os.path.join(root, name))
+                            self.found_folders.add(os.path.dirname(os.path.join(root, name)))             
+        # Filter by file type
+        if self.search_type or len(self.search_type)>0:
+            self.found_files,folders = filter_type(self)
+            self.found_folders = folders.intersection(self.found_folders)
+        self.filtered_files, self.filtered_folders = self.found_files, self.found_folders
+        show_data(self,source)
+    else:#Nothing selected 
+        reset_data(self)
+        if not self.init:
+            show_empty(self)
     stop_all(self)
 #----------------------------------------------------------------------
 def clear_preview(self):

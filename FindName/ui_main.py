@@ -7,18 +7,21 @@ from PySide6.QtGui import QIcon
 from actions import *
 from languages import *
 
-class InitForm():
+class InitInfo():
     def __init__(self):
         super().__init__()
         self.REG_KEY  = "FileSearch"
-        self.OS =check_OS(self)
+        self.OS =check_PC(self)
 #---------------------------------------------------------------------------
 class CheckForm(QWidget):
     def __init__(self):
         super().__init__()
-        self.REG_KEY = InitForm().REG_KEY
-        self.OS = InitForm().OS
+        self.REG_KEY = InitInfo().REG_KEY
+        self.OS = InitInfo().OS
+        # self.LANG = InitInfo().LANG
+        # self.PATH = InitInfo().PATH
         self.setWindowTitle("Password Check")
+        # self.setWindowTitle(LICENSE[self.LANG]["Title"])
         self.setGeometry(100, 100, 300, 150)
         self.setup_ui()
         move_to_center(self)
@@ -50,7 +53,7 @@ class TimePopup(QDialog):
     def __init__(self):
         super().__init__()
         move_to_center(self)
-        self.setWindowTitle(InitForm().REG_KEY)
+        self.setWindowTitle(InitInfo().REG_KEY)
         self.setWindowFlags(Qt.Tool | Qt.WindowStaysOnTopHint)
         # self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.label = QLabel("Searching..., please wait")
@@ -72,8 +75,10 @@ class FileSearch(QWidget):
     #---------------------------------------------------------------------------
     def default_values(self):
         self.limit_timer  = 200
-        self.REG_KEY = InitForm().REG_KEY
-        self.OS = InitForm().OS
+        self.REG_KEY = InitInfo().REG_KEY
+        self.OS = InitInfo().OS
+        # self.language = InitInfo().LANG
+        # self.search_path = InitInfo().PATH
         self.language,self.search_path = get_registry_values(self)
         self.APP_NAME = TITLE[self.language]
         self.lang = LANGUAGES

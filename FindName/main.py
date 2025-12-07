@@ -1,12 +1,11 @@
 # main.py
 import sys
 from PySide6.QtWidgets import QApplication
-from ui_main import CheckForm,InitForm ,FileSearchHandler
+from ui_main import CheckForm,InitInfo ,FileSearchHandler
 from actions import check_registration
-
 def main():
     app = QApplication(sys.argv)
-    is_OK = check_registration(InitForm())
+    is_OK = check_registration(InitInfo())
     form = FileSearchHandler() if is_OK else CheckForm()
     form.show()
     sys.exit(app.exec())

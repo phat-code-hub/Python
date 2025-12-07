@@ -11,28 +11,31 @@ from PySide6.QtGui import QFontMetrics,QDesktopServices
 from PySide6.QtGui import QPixmap,QImageReader
 
 #--------------------------------------------------------------------------------------
-def check_OS(self):
+def check_PC(self):
     import platform
     if platform.system() == "Windows":
         return "WIN"
     elif platform.system() == "Darwin":
         return "MAC"
     else:
-        return "LINUX"
+        return  "LINUX"
 #--------------------------------------------------------------------------------------
-def check_registration(self):
+def check_registration(self): #For UnitFrom
     passed = False
-    if ui_main.InitForm().OS == "WIN":
+    if self.OS == "WIN":
         import winreg
         try:
             reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
             is_passed = winreg.QueryValueEx(reg_key, "Passed")
             if is_passed[0] == "True":
                 passed = True
+                # self.LANG = winreg.QueryValueEx(reg_key, "Language")
+                # self.PATH = winreg.QueryValueEx(reg_key, "SearchPath")
             winreg.CloseKey(reg_key)
         except Exception:
-            passed=False
-    elif ui_main.InitForm().OS == "MAC":
+            # passed=False
+            pass
+    elif self.OS == "MAC":
         pass
     else: #self.OS = "LINUX"
         pass

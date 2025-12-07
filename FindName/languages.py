@@ -1,5 +1,24 @@
 # languages.py
 
+#Check License
+LICENSE ={
+    "English": {"Title": "Valid License Check",
+                "Prompt": "Enter your license key:",
+                "Display": "Show/Hide",
+                "Button": "Check"
+                },
+    "Japanese": {"Title": "ライセンスキー確認",
+                "Prompt": "ライセンスキーを入力下さい:",
+                "Display": "表示/非表示",
+                "Button": "確認"
+                },
+    "Vietnamese": {"Title": "Kiểm tra bản quyền",
+                "Prompt": "Vui lòng nhập số bản quyền:",
+                "Display": "Hiện/Ẩn",
+                "Button": "Kiểm tra"
+                }
+}
+
 #Title
 TITLE = {
     "English":"Search File",

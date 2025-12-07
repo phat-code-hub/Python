@@ -11,17 +11,17 @@ class InitInfo():
     def __init__(self):
         super().__init__()
         self.REG_KEY  = "FileSearch"
-        self.OS,self.LOCALE =check_PC(self)
+        self.OS,self.LANG =check_PC(self)
+        # check_PC(self)
 #---------------------------------------------------------------------------
 class CheckForm(QWidget):
     def __init__(self):
         super().__init__()
         self.REG_KEY = InitInfo().REG_KEY
         self.OS = InitInfo().OS
-        # self.LANG = InitInfo().LANG
-        # self.PATH = InitInfo().PATH
-        self.setWindowTitle("Password Check")
-        # self.setWindowTitle(LICENSE[self.LANG]["Title"])
+        self.LANG = InitInfo().LANG
+        # self.setWindowTitle("Password Check")
+        self.setWindowTitle(LICENSE[self.LANG]["Title"])
         self.setGeometry(100, 100, 300, 150)
         self.setup_ui()
         move_to_center(self)

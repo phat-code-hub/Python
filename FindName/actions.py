@@ -3,6 +3,7 @@
 import os
 import sys
 import openpyxl
+import platform
 import ui_main
 from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit,QApplication
 from PySide6.QtCore import Qt,QUrl
@@ -12,20 +13,75 @@ from PySide6.QtGui import QPixmap,QImageReader
 
 #--------------------------------------------------------------------------------------
 def check_PC(self):
-    import platform
     if platform.system() == "Windows":
         os = "WIN"
-        locale = locale.getdefaultlocale()[0]
     elif platform.system() == "Darwin":
         os = "MAC"
     else:
         os = "LINUX"
-    sys_language = system_language(self)
-    return os,locale
+    lang = get_system_language(self,os)
+    return os, lang
 #--------------------------------------------------------------------------------------
-def system_language(self):
-    pass
+def normalize_lang(code: str) -> str:
+    """Convert Windows style (en_US) to BCP-47 (en-US)."""
+    if not code:
+        return None
+    return code.replace("_", "-")
 #--------------------------------------------------------------------------------------
+def lang_to_name(lang_code: str) -> str:
+    """Map language code to readable name."""
+    mapping = {
+        "en-US": "English",
+        "ja-JP": "Japanese",
+        "vi-VN": "Vietnamese",
+    }
+    return mapping.get(lang_code, lang_code)  # fallback → return original code
+#--------------------------------------------------------------------------------------
+def  get_system_language(self,os ="WIN") -> str:
+    import ctypes,locale,plistlib,subprocess
+    if os == "WIN":
+        try:
+            lang_id = ctypes.windll.kernel32.GetUserDefaultUILanguage()
+            lang = normalize_lang(locale.windows_locale.get(lang_id))
+            return lang_to_name(lang)
+        except Exception:
+            pass
+
+        try:
+            lang = normalize_lang(locale.getdefaultlocale()[0])
+            return lang_to_name(lang)
+        except Exception:
+            pass
+    elif os == "MAC":
+        try:
+            plist_path = os.path.expanduser(
+                "~/Library/Preferences/.GlobalPreferences.plist"
+            )
+            with open(plist_path, "rb") as f:
+                plist = plistlib.load(f)
+            lang = normalize_lang(plist.get("AppleLanguages", [None])[0])
+            return lang_to_name(lang)
+        except Exception:
+            pass
+
+        try:
+            result = subprocess.run(
+                ["defaults", "read", "-g", "AppleLanguages"],
+                capture_output=True, text=True
+            )
+            lines = result.stdout.strip().split("\n")
+            if lines:
+                lang = normalize_lang(lines[0].strip().strip('"'))
+                return lang_to_name(lang)
+        except Exception:
+            pass
+    else: #LINUX
+        try:
+            lang = normalize_lang(locale.getdefaultlocale()[0])
+            return lang_to_name(lang)
+        except Exception:
+            return  None
+    #--------------------------------------------------------------------------------------
 def check_registration(self): #For UnitFrom
     passed = False
     if self.OS == "WIN":

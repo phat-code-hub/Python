@@ -11,7 +11,7 @@ class InitInfo():
     def __init__(self):
         super().__init__()
         self.REG_KEY  = "FileSearch"
-        self.OS =check_PC(self)
+        self.OS,self.LOCALE =check_PC(self)
 #---------------------------------------------------------------------------
 class CheckForm(QWidget):
     def __init__(self):

@@ -14,11 +14,17 @@ from PySide6.QtGui import QPixmap,QImageReader
 def check_PC(self):
     import platform
     if platform.system() == "Windows":
-        return "WIN"
+        os = "WIN"
+        locale = locale.getdefaultlocale()[0]
     elif platform.system() == "Darwin":
-        return "MAC"
+        os = "MAC"
     else:
-        return  "LINUX"
+        os = "LINUX"
+    sys_language = system_language(self)
+    return os,locale
+#--------------------------------------------------------------------------------------
+def system_language(self):
+    pass
 #--------------------------------------------------------------------------------------
 def check_registration(self): #For UnitFrom
     passed = False
@@ -29,8 +35,8 @@ def check_registration(self): #For UnitFrom
             is_passed = winreg.QueryValueEx(reg_key, "Passed")
             if is_passed[0] == "True":
                 passed = True
-                # self.LANG = winreg.QueryValueEx(reg_key, "Language")
-                # self.PATH = winreg.QueryValueEx(reg_key, "SearchPath")
+                self.LANG = winreg.QueryValueEx(reg_key, "Language")
+                self.PATH = winreg.QueryValueEx(reg_key, "SearchPath")
             winreg.CloseKey(reg_key)
         except Exception:
             # passed=False

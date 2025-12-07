@@ -10,16 +10,18 @@ from languages import *
 class InitForm():
     def __init__(self):
         super().__init__()
-        self.OS ="WIN"
         self.REG_KEY  = "FileSearch"
+        self.OS =check_OS(self)
 #---------------------------------------------------------------------------
 class CheckForm(QWidget):
     def __init__(self):
         super().__init__()
+        self.REG_KEY = InitForm().REG_KEY
+        self.OS = InitForm().OS
         self.setWindowTitle("Password Check")
         self.setGeometry(100, 100, 300, 150)
         self.setup_ui()
-
+        move_to_center(self)
     def setup_ui(self):
         layout = QVBoxLayout()
         self.label = QLabel("Enter your password:")
@@ -47,8 +49,8 @@ class TimePopup(QDialog):
     """Popup window showing elapsed time — no buttons."""
     def __init__(self):
         super().__init__()
-        b_instance = InitForm()
-        self.setWindowTitle(b_instance.REG_KEY)
+        move_to_center(self)
+        self.setWindowTitle(InitForm().REG_KEY)
         self.setWindowFlags(Qt.Tool | Qt.WindowStaysOnTopHint)
         # self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.label = QLabel("Searching..., please wait")
@@ -66,12 +68,12 @@ class FileSearch(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
+        move_to_center(self)
     #---------------------------------------------------------------------------
     def default_values(self):
         self.limit_timer  = 200
-        a_instance = InitForm()
-        self.OS = a_instance.OS
-        self.REG_KEY = a_instance.REG_KEY
+        self.REG_KEY = InitForm().REG_KEY
+        self.OS = InitForm().OS
         self.language,self.search_path = get_registry_values(self)
         self.APP_NAME = TITLE[self.language]
         self.lang = LANGUAGES

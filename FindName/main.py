@@ -10,6 +10,5 @@ def main():
     form = FileSearchHandler() if is_OK else CheckForm()
     form.show()
     sys.exit(app.exec())
-
 if __name__ == "__main__":
     main()

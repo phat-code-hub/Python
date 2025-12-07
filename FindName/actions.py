@@ -3,29 +3,36 @@
 import os
 import sys
 import openpyxl
-from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit
+import ui_main
+from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit,QApplication
 from PySide6.QtCore import Qt,QUrl
 from languages import *
 from PySide6.QtGui import QFontMetrics,QDesktopServices
-import ui_main
 from PySide6.QtGui import QPixmap,QImageReader
 
 #--------------------------------------------------------------------------------------
-
+def check_OS(self):
+    import platform
+    if platform.system() == "Windows":
+        return "WIN"
+    elif platform.system() == "Darwin":
+        return "MAC"
+    else:
+        return "LINUX"
+#--------------------------------------------------------------------------------------
 def check_registration(self):
     passed = False
-    if self.OS == "WIN":
+    if ui_main.InitForm().OS == "WIN":
         import winreg
         try:
-            # reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\\FileSearch")
             reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
             is_passed = winreg.QueryValueEx(reg_key, "Passed")
             if is_passed[0] == "True":
                 passed = True
-            winreg.CloseKey(reg_key)    
+            winreg.CloseKey(reg_key)
         except Exception:
             passed=False
-    elif self.OS == "MAC":
+    elif ui_main.InitForm().OS == "MAC":
         pass
     else: #self.OS = "LINUX"
         pass
@@ -48,6 +55,21 @@ def check_password(self,password):
     else:
         QMessageBox.critical(None, "Error", "Incorrect password.")
         self.close()
+#--------------------------------------------------------------------------------------
+def move_to_center(self):
+        # Get the screen geometry of the primary screen
+        screen = QApplication.primaryScreen()
+        screen_geometry = screen.availableGeometry()
+
+        # Get the geometry of the window
+        window_geometry = self.frameGeometry()
+
+        # Move center of window geometry to center of screen
+        window_geometry.moveCenter(screen_geometry.center())
+
+        # Move the top-left of the window to match the new center
+        self.move(window_geometry.topLeft())
+
 #--------------------------------------------------------------------------------------
 def get_registry_values(self):
         if self.OS =="WIN":

@@ -4,7 +4,8 @@ import os
 import locale
 import openpyxl
 import platform
-from  ui_main import InitInfo
+import ui_main 
+from ui_main import *
 from  languages import ERROR,MAPPING
 from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit,QApplication
 from PySide6.QtCore import Qt,QUrl
@@ -12,112 +13,41 @@ from languages import *
 from PySide6.QtGui import QFontMetrics,QDesktopServices,QPixmap,QImageReader 
 
 def get_os_and_language(self):
-        system = platform.system()
-        # Detect OS
-        if system == "Windows":
-            os_name = "WIN"
-            lang, _ = locale.getdefaultlocale()
-            lang_code = lang or "en_US"
+    system = platform.system()
+    # Detect OS
+    if system == "Windows":
+        os_name = "WIN"
+        lang, _ = locale.getdefaultlocale()
+        lang_code = lang or "en_US"
 
-        elif system == "Darwin":  # macOS
-            os_name = "MAC"
-            lang_code = os.environ.get("LANG", "")
-            lang_code = lang_code.split(".")[0] if "." in lang_code else lang_code
+    elif system == "Darwin":  # macOS
+        os_name = "MAC"
+        lang_code = os.environ.get("LANG", "")
+        lang_code = lang_code.split(".")[0] if "." in lang_code else lang_code
 
-            if not lang_code:
-                lang_code, _ = locale.getdefaultlocale()
+        if not lang_code:
+            lang_code, _ = locale.getdefaultlocale()
 
-        elif system == "Linux":
-            os_name = "LINUX"
-            lang_code = os.environ.get("LANG", "")
-            lang_code = lang_code.split(".")[0] if "." in lang_code else lang_code
+    elif system == "Linux":
+        os_name = "LINUX"
+        lang_code = os.environ.get("LANG", "")
+        lang_code = lang_code.split(".")[0] if "." in lang_code else lang_code
 
-            if not lang_code:
-                lang_code, _ = locale.getdefaultlocale()
-        else:
-            os_name = "UNKNOWN"
-            lang_code = "en_US"
+        if not lang_code:
+            lang_code, _ = locale.getdefaultlocale()
+    else:
+        os_name = "UNKNOWN"
+        lang_code = "en_US"
 
-        return os_name, MAPPING.get(lang_code, "English")
+    return os_name, MAPPING.get(lang_code, "English")
 
-
-#--------------------------------------------------------------------------------------
-# def check_PC(self):
-#     if platform.system() == "Windows":
-#         os = "WIN"
-#     elif platform.system() == "Darwin":
-#         os = "MAC"
-#     else:
-#         os = "LINUX"
-#     lang = get_system_language(self,os)
-#     return os, lang
-# #--------------------------------------------------------------------------------------
-# def normalize_lang(code: str) -> str:
-#     """Convert Windows style (en_US) to BCP-47 (en-US)."""
-#     if not code:
-#         return None
-#     return code.replace("_", "-")
-# #--------------------------------------------------------------------------------------
-# def lang_to_name(lang_code: str) -> str:
-#     """Map language code to readable name."""
-#     mapping = {
-#         "en-US": "English",
-#         "ja-JP": "Japanese",
-#         "vi-VN": "Vietnamese",
-#     }
-#     return mapping.get(lang_code, lang_code)  # fallback → return original code
-# #--------------------------------------------------------------------------------------
-# def  get_system_language(self,os ="WIN") -> str:
-#     import ctypes,locale,plistlib,subprocess
-#     if os == "WIN":
-#         try:
-#             lang_id = ctypes.windll.kernel32.GetUserDefaultUILanguage()
-#             lang = normalize_lang(locale.windows_locale.get(lang_id))
-#             return lang_to_name(lang)
-#         except Exception:
-#             pass
-
-#         try:
-#             lang = normalize_lang(locale.getdefaultlocale()[0])
-#             return lang_to_name(lang)
-#         except Exception:
-#             pass
-#     elif os == "MAC":
-#         try:
-#             plist_path = os.path.expanduser(
-#                 "~/Library/Preferences/.GlobalPreferences.plist"
-#             )
-#             with open(plist_path, "rb") as f:
-#                 plist = plistlib.load(f)
-#             lang = normalize_lang(plist.get("AppleLanguages", [None])[0])
-#             return lang_to_name(lang)
-#         except Exception:
-#             pass
-
-#         try:
-#             result = subprocess.run(
-#                 ["defaults", "read", "-g", "AppleLanguages"],
-#                 capture_output=True, text=True
-#             )
-#             lines = result.stdout.strip().split("\n")
-#             if lines:
-#                 lang = normalize_lang(lines[0].strip().strip('"'))
-#                 return lang_to_name(lang)
-#         except Exception:
-#             pass
-#     else: #LINUX
-#         try:
-#             lang = normalize_lang(locale.getdefaultlocale()[0])
-#             return lang_to_name(lang)
-#         except Exception:
-#             return  None
     #--------------------------------------------------------------------------------------
 def check_registration(self): #For UnitFrom
     passed = False
     if self.OS == "WIN":
         import winreg
         try:
-            reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
+            reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, self.WIN_KEY)
             is_passed = winreg.QueryValueEx(reg_key, "Passed")
             if is_passed[0] == "True":
                 passed = True
@@ -145,7 +75,7 @@ def check_license(self,password):
     if "0" in password:
         self.close()
         create_registry(self)
-        ui_main.FileSearchHandler().show()
+        FileSearchHandler().show()
     else:
         QMessageBox.critical(None, ERROR[self.LANG]["Title"],ERROR[self.LANG]["Message"])
         self.close()
@@ -582,19 +512,19 @@ def resizeEvent(self, event):
     super().resizeEvent(event)
 #----------------------------------------------------------------------
 def save_Info(self):
-        if self.os == "Windows":
+        if self.OS == "Windows":
             self._save_windows()
-        elif self.os == "Darwin":
+        elif self.OS == "Darwin":
             self._save_macos()
-        elif self.os == "Linux":
+        elif self.OS == "Linux":
             self._save_linux()
 
 def load_Info(self):
-    if self.os == "Windows":
+    if self.OS == "Windows":
         return self._load_windows()
-    elif self.os == "Darwin":
+    elif self.OS == "Darwin":
         return self._load_macos()
-    elif self.os == "Linux":
+    elif self.OS == "Linux":
         return self._load_linux()
     return None, None
 
@@ -603,13 +533,12 @@ def load_Info(self):
 # =====================================================
 def _save_windows(self):
     import winreg
-    # key_path = f"Software\\{self.app_name}"
-
     try:
-        key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, InitInfo().WIN_KEY)
-        winreg.SetValueEx(key, "name", 0, winreg.REG_SZ, name)
-        winreg.SetValueEx(key, "age", 0, winreg.REG_SZ, str(age))
-        winreg.CloseKey(key)
+        reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, InitInfo().WIN_KEY)
+        winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ, self.language)
+        winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
+        winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
+        winreg.CloseKey(reg_key)
     except Exception as e:
         print("Windows save error:", e)
 

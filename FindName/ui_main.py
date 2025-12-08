@@ -11,7 +11,7 @@ from languages import *
 # import locale
 # import json
 # import plistlib
-from  languages import REG_KEY,MAPPING
+from  languages import REG_KEY
 from pathlib import Path
 
 class InitInfo():

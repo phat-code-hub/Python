@@ -7,11 +7,21 @@ from PySide6.QtGui import QIcon
 from actions import *
 from languages import *
 
+# import platform
+# import locale
+import json
+import plistlib
+from  languages import REG_KEY,MAPPING
+from pathlib import Path
+
 class InitInfo():
-    def __init__(self):
-        super().__init__()
-        self.REG_KEY  = REG_KEY
-        self.OS,self.LANG =check_PC(self)
+    def __init__(self) :
+        self.REG_KEY = REG_KEY
+        self.WIN_KEY = f"Software\\{self.REG_KEY}"
+        self.MAC_KEY = f"com.mycompany.{self.REG_KEY.lower()}" # plist file name
+        self.LINUX_KEY = f"/etc/{self.REG_KEY.lower()}" # ~/.config/myapp/
+        self.OS,self.LANG= get_os_and_language(self)
+
 #---------------------------------------------------------------------------
 class CheckForm(QWidget):
     def __init__(self):

@@ -1,86 +1,116 @@
 # actions.py
 #--------------------------------------------------------------------------------------
 import os
-import sys
+import locale
 import openpyxl
 import platform
 import ui_main
-from  languages import ERROR
+from  languages import ERROR,MAPPING
 from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit,QApplication
 from PySide6.QtCore import Qt,QUrl
 from languages import *
 from PySide6.QtGui import QFontMetrics,QDesktopServices,QPixmap,QImageReader 
 
-#--------------------------------------------------------------------------------------
-def check_PC(self):
-    if platform.system() == "Windows":
-        os = "WIN"
-    elif platform.system() == "Darwin":
-        os = "MAC"
-    else:
-        os = "LINUX"
-    lang = get_system_language(self,os)
-    return os, lang
-#--------------------------------------------------------------------------------------
-def normalize_lang(code: str) -> str:
-    """Convert Windows style (en_US) to BCP-47 (en-US)."""
-    if not code:
-        return None
-    return code.replace("_", "-")
-#--------------------------------------------------------------------------------------
-def lang_to_name(lang_code: str) -> str:
-    """Map language code to readable name."""
-    mapping = {
-        "en-US": "English",
-        "ja-JP": "Japanese",
-        "vi-VN": "Vietnamese",
-    }
-    return mapping.get(lang_code, lang_code)  # fallback → return original code
-#--------------------------------------------------------------------------------------
-def  get_system_language(self,os ="WIN") -> str:
-    import ctypes,locale,plistlib,subprocess
-    if os == "WIN":
-        try:
-            lang_id = ctypes.windll.kernel32.GetUserDefaultUILanguage()
-            lang = normalize_lang(locale.windows_locale.get(lang_id))
-            return lang_to_name(lang)
-        except Exception:
-            pass
+def get_os_and_language(self):
+        system = platform.system()
+        # Detect OS
+        if system == "Windows":
+            os_name = "WIN"
+            lang, _ = locale.getdefaultlocale()
+            lang_code = lang or "en_US"
 
-        try:
-            lang = normalize_lang(locale.getdefaultlocale()[0])
-            return lang_to_name(lang)
-        except Exception:
-            pass
-    elif os == "MAC":
-        try:
-            plist_path = os.path.expanduser(
-                "~/Library/Preferences/.GlobalPreferences.plist"
-            )
-            with open(plist_path, "rb") as f:
-                plist = plistlib.load(f)
-            lang = normalize_lang(plist.get("AppleLanguages", [None])[0])
-            return lang_to_name(lang)
-        except Exception:
-            pass
+        elif system == "Darwin":  # macOS
+            os_name = "MAC"
+            lang_code = os.environ.get("LANG", "")
+            lang_code = lang_code.split(".")[0] if "." in lang_code else lang_code
 
-        try:
-            result = subprocess.run(
-                ["defaults", "read", "-g", "AppleLanguages"],
-                capture_output=True, text=True
-            )
-            lines = result.stdout.strip().split("\n")
-            if lines:
-                lang = normalize_lang(lines[0].strip().strip('"'))
-                return lang_to_name(lang)
-        except Exception:
-            pass
-    else: #LINUX
-        try:
-            lang = normalize_lang(locale.getdefaultlocale()[0])
-            return lang_to_name(lang)
-        except Exception:
-            return  None
+            if not lang_code:
+                lang_code, _ = locale.getdefaultlocale()
+
+        elif system == "Linux":
+            os_name = "LINUX"
+            lang_code = os.environ.get("LANG", "")
+            lang_code = lang_code.split(".")[0] if "." in lang_code else lang_code
+
+            if not lang_code:
+                lang_code, _ = locale.getdefaultlocale()
+        else:
+            os_name = "UNKNOWN"
+            lang_code = "en_US"
+
+        return os_name, MAPPING.get(lang_code, "English")
+
+
+#--------------------------------------------------------------------------------------
+# def check_PC(self):
+#     if platform.system() == "Windows":
+#         os = "WIN"
+#     elif platform.system() == "Darwin":
+#         os = "MAC"
+#     else:
+#         os = "LINUX"
+#     lang = get_system_language(self,os)
+#     return os, lang
+# #--------------------------------------------------------------------------------------
+# def normalize_lang(code: str) -> str:
+#     """Convert Windows style (en_US) to BCP-47 (en-US)."""
+#     if not code:
+#         return None
+#     return code.replace("_", "-")
+# #--------------------------------------------------------------------------------------
+# def lang_to_name(lang_code: str) -> str:
+#     """Map language code to readable name."""
+#     mapping = {
+#         "en-US": "English",
+#         "ja-JP": "Japanese",
+#         "vi-VN": "Vietnamese",
+#     }
+#     return mapping.get(lang_code, lang_code)  # fallback → return original code
+# #--------------------------------------------------------------------------------------
+# def  get_system_language(self,os ="WIN") -> str:
+#     import ctypes,locale,plistlib,subprocess
+#     if os == "WIN":
+#         try:
+#             lang_id = ctypes.windll.kernel32.GetUserDefaultUILanguage()
+#             lang = normalize_lang(locale.windows_locale.get(lang_id))
+#             return lang_to_name(lang)
+#         except Exception:
+#             pass
+
+#         try:
+#             lang = normalize_lang(locale.getdefaultlocale()[0])
+#             return lang_to_name(lang)
+#         except Exception:
+#             pass
+#     elif os == "MAC":
+#         try:
+#             plist_path = os.path.expanduser(
+#                 "~/Library/Preferences/.GlobalPreferences.plist"
+#             )
+#             with open(plist_path, "rb") as f:
+#                 plist = plistlib.load(f)
+#             lang = normalize_lang(plist.get("AppleLanguages", [None])[0])
+#             return lang_to_name(lang)
+#         except Exception:
+#             pass
+
+#         try:
+#             result = subprocess.run(
+#                 ["defaults", "read", "-g", "AppleLanguages"],
+#                 capture_output=True, text=True
+#             )
+#             lines = result.stdout.strip().split("\n")
+#             if lines:
+#                 lang = normalize_lang(lines[0].strip().strip('"'))
+#                 return lang_to_name(lang)
+#         except Exception:
+#             pass
+#     else: #LINUX
+#         try:
+#             lang = normalize_lang(locale.getdefaultlocale()[0])
+#             return lang_to_name(lang)
+#         except Exception:
+#             return  None
     #--------------------------------------------------------------------------------------
 def check_registration(self): #For UnitFrom
     passed = False
@@ -169,15 +199,16 @@ def create_registry(self):
         winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
         winreg.CloseKey(reg_key)
     elif self.OS == "MAC":
+        pass
         # macOS: use plist
-        plist_path = Path("~/Library/Preferences").expanduser() / f"{self.app_id}.plist"
-        data = {"a": a, "b": b}
+        # plist_path = Path("~/Library/Preferences").expanduser() / f"{self.app_id}.plist"
+        # data = {"a": a, "b": b}
 
-        try:
-            with open(plist_path, "wb") as f:
-                plistlib.dump(data, f)
-        except Exception as e:
-            print("macOS plist save error:", e)
+        # try:
+        #     with open(plist_path, "wb") as f:
+        #         plistlib.dump(data, f)
+        # except Exception as e:
+        #     print("macOS plist save error:", e)
     else:
         pass
 #----------------------------------------------------------------   
@@ -550,3 +581,100 @@ def resizeEvent(self, event):
         self.update_scaled_image()
     super().resizeEvent(event)
 #----------------------------------------------------------------------
+def save(self, name, age):
+        if self.os == "Windows":
+            self._save_windows(name, age)
+        elif self.os == "Darwin":
+            self._save_macos(name, age)
+        elif self.os == "Linux":
+            self._save_linux(name, age)
+
+def load(self):
+    if self.os == "Windows":
+        return self._load_windows()
+    elif self.os == "Darwin":
+        return self._load_macos()
+    elif self.os == "Linux":
+        return self._load_linux()
+    return None, None
+
+# =====================================================
+# WINDOWS — Registry
+# =====================================================
+def _save_windows(self, name, age):
+    import winreg
+    key_path = f"Software\\{self.app_name}"
+
+    try:
+        key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
+        winreg.SetValueEx(key, "name", 0, winreg.REG_SZ, name)
+        winreg.SetValueEx(key, "age", 0, winreg.REG_SZ, str(age))
+        winreg.CloseKey(key)
+    except Exception as e:
+        print("Windows save error:", e)
+
+def _load_windows(self):
+    import winreg
+    key_path = f"Software\\{self.app_name}"
+
+    try:
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path)
+        name = winreg.QueryValueEx(key, "name")[0]
+        age = winreg.QueryValueEx(key, "age")[0]
+        winreg.CloseKey(key)
+        return name, age
+    except:
+        return None, None
+
+# =====================================================
+# macOS — plist in ~/Library/Preferences/
+# =====================================================
+def _save_macos(self, name, age):
+    plist_path = Path("~/Library/Preferences").expanduser() / f"{self.mac_app_id}.plist"
+    data = {"name": name, "age": age}
+
+    try:
+        with open(plist_path, "wb") as f:
+            plistlib.dump(data, f)
+    except Exception as e:
+        print("macOS save error:", e)
+
+def _load_macos(self):
+    plist_path = Path("~/Library/Preferences").expanduser() / f"{self.mac_app_id}.plist"
+    if not plist_path.exists():
+        return None, None
+
+    try:
+        with open(plist_path, "rb") as f:
+            data = plistlib.load(f)
+        return data.get("name"), data.get("age")
+    except:
+        return None, None
+
+# =====================================================
+# LINUX — ~/.config/<appname>/settings.json
+# =====================================================
+def _save_linux(self, name, age):
+    config_dir = Path("~/.config").expanduser() / self.linux_dir
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    file = config_dir / "settings.json"
+    data = {"name": name, "age": age}
+
+    try:
+        with open(file, "w") as f:
+            json.dump(data, f, indent=4)
+    except Exception as e:
+        print("Linux save error:", e)
+
+def _load_linux(self):
+    file = Path("~/.config").expanduser() / self.linux_dir / "settings.json"
+    if not file.exists():
+        return None, None
+
+    try:
+        with open(file, "r") as f:
+            data = json.load(f)
+        return data.get("name"), data.get("age")
+    except:
+        return None, None

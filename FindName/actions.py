@@ -4,7 +4,7 @@ import os
 import locale
 import openpyxl
 import platform
-import ui_main
+from  ui_main import InitInfo
 from  languages import ERROR,MAPPING
 from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit,QApplication
 from PySide6.QtCore import Qt,QUrl
@@ -581,15 +581,15 @@ def resizeEvent(self, event):
         self.update_scaled_image()
     super().resizeEvent(event)
 #----------------------------------------------------------------------
-def save(self, name, age):
+def save_Info(self):
         if self.os == "Windows":
-            self._save_windows(name, age)
+            self._save_windows()
         elif self.os == "Darwin":
-            self._save_macos(name, age)
+            self._save_macos()
         elif self.os == "Linux":
-            self._save_linux(name, age)
+            self._save_linux()
 
-def load(self):
+def load_Info(self):
     if self.os == "Windows":
         return self._load_windows()
     elif self.os == "Darwin":
@@ -601,80 +601,80 @@ def load(self):
 # =====================================================
 # WINDOWS — Registry
 # =====================================================
-def _save_windows(self, name, age):
+def _save_windows(self):
     import winreg
-    key_path = f"Software\\{self.app_name}"
+    # key_path = f"Software\\{self.app_name}"
 
     try:
-        key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
+        key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, InitInfo().WIN_KEY)
         winreg.SetValueEx(key, "name", 0, winreg.REG_SZ, name)
         winreg.SetValueEx(key, "age", 0, winreg.REG_SZ, str(age))
         winreg.CloseKey(key)
     except Exception as e:
         print("Windows save error:", e)
 
-def _load_windows(self):
-    import winreg
-    key_path = f"Software\\{self.app_name}"
+# def _load_windows(self):
+#     import winreg
+#     key_path = f"Software\\{self.app_name}"
 
-    try:
-        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path)
-        name = winreg.QueryValueEx(key, "name")[0]
-        age = winreg.QueryValueEx(key, "age")[0]
-        winreg.CloseKey(key)
-        return name, age
-    except:
-        return None, None
+#     try:
+#         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path)
+#         name = winreg.QueryValueEx(key, "name")[0]
+#         age = winreg.QueryValueEx(key, "age")[0]
+#         winreg.CloseKey(key)
+#         return name, age
+#     except:
+#         return None, None
 
 # =====================================================
 # macOS — plist in ~/Library/Preferences/
 # =====================================================
-def _save_macos(self, name, age):
-    plist_path = Path("~/Library/Preferences").expanduser() / f"{self.mac_app_id}.plist"
-    data = {"name": name, "age": age}
+# def _save_macos(self, name, age):
+#     plist_path = Path("~/Library/Preferences").expanduser() / f"{self.mac_app_id}.plist"
+#     data = {"name": name, "age": age}
 
-    try:
-        with open(plist_path, "wb") as f:
-            plistlib.dump(data, f)
-    except Exception as e:
-        print("macOS save error:", e)
+#     try:
+#         with open(plist_path, "wb") as f:
+#             plistlib.dump(data, f)
+#     except Exception as e:
+#         print("macOS save error:", e)
 
-def _load_macos(self):
-    plist_path = Path("~/Library/Preferences").expanduser() / f"{self.mac_app_id}.plist"
-    if not plist_path.exists():
-        return None, None
+# def _load_macos(self):
+#     plist_path = Path("~/Library/Preferences").expanduser() / f"{self.mac_app_id}.plist"
+#     if not plist_path.exists():
+#         return None, None
 
-    try:
-        with open(plist_path, "rb") as f:
-            data = plistlib.load(f)
-        return data.get("name"), data.get("age")
-    except:
-        return None, None
+#     try:
+#         with open(plist_path, "rb") as f:
+#             data = plistlib.load(f)
+#         return data.get("name"), data.get("age")
+#     except:
+#         return None, None
 
 # =====================================================
 # LINUX — ~/.config/<appname>/settings.json
 # =====================================================
-def _save_linux(self, name, age):
-    config_dir = Path("~/.config").expanduser() / self.linux_dir
-    config_dir.mkdir(parents=True, exist_ok=True)
+# def _save_linux(self, name, age):
+#     config_dir = Path("~/.config").expanduser() / self.linux_dir
+#     config_dir.mkdir(parents=True, exist_ok=True)
 
-    file = config_dir / "settings.json"
-    data = {"name": name, "age": age}
+#     file = config_dir / "settings.json"
+#     data = {"name": name, "age": age}
 
-    try:
-        with open(file, "w") as f:
-            json.dump(data, f, indent=4)
-    except Exception as e:
-        print("Linux save error:", e)
+#     try:
+#         with open(file, "w") as f:
+#             json.dump(data, f, indent=4)
+#     except Exception as e:
+#         print("Linux save error:", e)
 
-def _load_linux(self):
-    file = Path("~/.config").expanduser() / self.linux_dir / "settings.json"
-    if not file.exists():
-        return None, None
+# def _load_linux(self):
+#     file = Path("~/.config").expanduser() / self.linux_dir / "settings.json"
+#     if not file.exists():
+#         return None, None
 
-    try:
-        with open(file, "r") as f:
-            data = json.load(f)
-        return data.get("name"), data.get("age")
-    except:
-        return None, None
+#     try:
+#         with open(file, "r") as f:
+#             data = json.load(f)
+#         return data.get("name"), data.get("age")
+#     except:
+#         return None, None

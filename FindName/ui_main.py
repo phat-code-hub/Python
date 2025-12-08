@@ -9,8 +9,8 @@ from languages import *
 
 # import platform
 # import locale
-import json
-import plistlib
+# import json
+# import plistlib
 from  languages import REG_KEY,MAPPING
 from pathlib import Path
 
@@ -63,7 +63,6 @@ class TimePopup(QDialog):
         move_to_center(self)
         self.setWindowTitle(InitInfo().REG_KEY)
         self.setWindowFlags(Qt.Tool | Qt.WindowStaysOnTopHint)
-        # self.label = QLabel("Searching..., please wait")
         self.label = QLabel()
         self.label.setStyleSheet("font-size: 18px; padding: 10px;color:black")
         self.setStyleSheet("background-color: #f0f0f0;")
@@ -318,7 +317,7 @@ class FileSearchHandler(FileSearch):
     def closeEvent(self, event):
         # Save to Windows Registry before closing
         try:
-            saved_to_registry(self)
+            save_Info(self)
         except Exception as e:
             print(f"Registry write failed: {e}")
 

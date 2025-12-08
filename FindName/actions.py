@@ -4,8 +4,7 @@ import os
 import locale
 import openpyxl
 import platform
-import ui_main 
-from ui_main import *
+import ui_main
 from  languages import ERROR,MAPPING
 from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit,QApplication
 from PySide6.QtCore import Qt,QUrl
@@ -75,7 +74,7 @@ def check_license(self,password):
     if "0" in password:
         self.close()
         create_registry(self)
-        FileSearchHandler().show()
+        ui_main.FileSearchHandler().show()
     else:
         QMessageBox.critical(None, ERROR[self.LANG]["Title"],ERROR[self.LANG]["Message"])
         self.close()
@@ -534,7 +533,7 @@ def load_Info(self):
 def _save_windows(self):
     import winreg
     try:
-        reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, InitInfo().WIN_KEY)
+        reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, ui_main.InitInfo().WIN_KEY)
         winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ, self.language)
         winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
         winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")

@@ -146,15 +146,6 @@ def get_registry_values(self):
             except FileNotFoundError:
                 return  "English",os.path.expanduser("~")
         elif self.OS == "MAC":
-            import Foundation # type: ignore
-            defaults = Foundation.NSSearchPathForDirectoriesInDomains_(Foundation.NSUserDomainMask, True, True)
-            if defaults:
-                default_path = defaults[0]
-                return "English", default_path
-            else:
-                return "English", os.path.expanduser("~")
-                
-            
             # elif sys.platform == "darwin":
             # macOS: use NSUserDefaults
             # from Foundation import NSUserDefaults
@@ -169,28 +160,26 @@ def get_registry_values(self):
             return "English",os.path.expanduser("~")
 #----------------------------------------------------------------
 def create_registry(self):
-        if self.OS == "WIN":
-            import winreg
-            # reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\FileSearch")
-            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
-            winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ,"English")
-            winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, os.path.expanduser("~")+"\\Documents")
-            winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
-            winreg.CloseKey(reg_key)
-        elif self.OS == "MAC":
-            # macOS: use NSUserDefaults
-            import Foundation # type: ignore
-            defaults = Foundation.NSSearchPathForDirectoriesInDomains_(Foundation.NSUserDomainMask, True, True)
-            if defaults:
-                default_path = defaults[0]
-                defaults = Foundation.NSUserDefaults.standardUserDefaults()
-                defaults.setValue("English", forKey="Language")
-                defaults.setValue(default_path, forKey="SearchPath")
-                defaults.synchronize()
-        else:
-            import os
-            os.environ["LANGUAGE"] = "English"
-            os.environ["SEARCH_PATH"] = os.path.expanduser("~") + "/Documents"
+    from pathlib import Path
+    if self.OS == "WIN":
+        import winreg
+        reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
+        winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ,"English")
+        winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, os.path.expanduser("~")+"\\Documents")
+        winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
+        winreg.CloseKey(reg_key)
+    elif self.OS == "MAC":
+        # macOS: use plist
+        plist_path = Path("~/Library/Preferences").expanduser() / f"{self.app_id}.plist"
+        data = {"a": a, "b": b}
+
+        try:
+            with open(plist_path, "wb") as f:
+                plistlib.dump(data, f)
+        except Exception as e:
+            print("macOS plist save error:", e)
+    else:
+        pass
 #----------------------------------------------------------------   
 def saved_to_registry(self):
         if self.OS == "WIN":
@@ -202,18 +191,9 @@ def saved_to_registry(self):
             winreg.CloseKey(reg_key)
         elif self.OS == "MAC":
             # macOS: use NSUserDefaults
-            import Foundation # type: ignore
-            defaults = Foundation.NSSearchPathForDirectoriesInDomains_(Foundation.NSUserDomainMask, True, True)
-            if defaults:
-                default_path = defaults[0]
-                defaults = Foundation.NSUserDefaults.standardUserDefaults()
-                defaults.setValue(self.language, forKey="Language")
-                defaults.setValue(self.search_path, forKey="SearchPath")
-                defaults.synchronize()
+            pass
         else:
-            import os
-            os.environ["LANGUAGE"] = self.language
-            os.environ["SEARCH_PATH"] = self.search_path
+            pass
 #----------------------------------------------------------------
 def change_language(self):
     langs,labels,types,search =LANGUAGES,LABELS,TYPES,OPTIONS
@@ -330,7 +310,8 @@ def open_file_location(self,item):
         else:  # Linux and others
             subprocess.run(["xdg-open", filepath])
     except Exception as e:
-        QMessageBox.critical(self, "Error", f"{ERROR[self.language]["Open"]}:\n{e}")
+        pass
+        # QMessageBox.critical(self, "Error", f"{ERROR[self.language]["Open"]}:\n{e}")
 #-----------------------------------------------------------------------   
 def change_tooltips(self):
     self.search_folder_change.setToolTip(HINT["Dialog"][self.language])

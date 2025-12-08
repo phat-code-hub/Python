@@ -10,9 +10,8 @@ from languages import *
 class InitInfo():
     def __init__(self):
         super().__init__()
-        self.REG_KEY  = "FileSearch"
+        self.REG_KEY  = REG_KEY
         self.OS,self.LANG =check_PC(self)
-        # self.LANG  ="Vietnamese"
 #---------------------------------------------------------------------------
 class CheckForm(QWidget):
     def __init__(self):
@@ -77,6 +76,11 @@ class FileSearch(QWidget):
         self.REG_KEY = InitInfo().REG_KEY
         self.OS = InitInfo().OS
         self.language,self.search_path = get_registry_values(self)
+        #Read/Write to registry variable
+        self.WIN_KEY = f"Software\\{self.REG_KEY}"
+        self.MAC_KEY = f"com.mycompany.{self.REG_KEY}"
+        self.LINUX_KEY = f"/etc/{self.REG_KEY}"
+        self.app_id = f"{self.REG_KEY}" # For MAC
         self.APP_NAME = TITLE[self.language]
         self.lang = LANGUAGES
         self.options = OPTIONS

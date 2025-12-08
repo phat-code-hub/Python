@@ -32,6 +32,14 @@ ERROR ={
                 "Open":"Không thể truy cập thư mục!",
                 },
 }
+REG_KEY = "FileSearch"
+APP_ID  =""
+MAPPING = {
+            "en_US": "English",
+            "en-EN": "English",
+            "ja_JP": "Japanese",
+            "vi_VN": "Vietnamese",
+        }
 #Title
 TITLE = {
     "English":"Search File",

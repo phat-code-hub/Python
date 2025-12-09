@@ -1,18 +1,20 @@
 # actions.py
 #--------------------------------------------------------------------------------------
 import os
-import locale
 import openpyxl
 import platform
 import ui_main
-from  languages import ERROR,MAPPING
+import locale
+# from  languages import ERROR
+from languages import *
 from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit,QApplication
 from PySide6.QtCore import Qt,QUrl
-from languages import *
 from PySide6.QtGui import QFontMetrics,QDesktopServices,QPixmap,QImageReader 
 
-def get_os_and_language(self):
+#--------------------------------------------------------------------------------------
+def PC_Info(self):
     system = platform.system()
+
     # Detect OS
     if system == "Windows":
         os_name = "WIN"
@@ -39,26 +41,42 @@ def get_os_and_language(self):
         lang_code = "en_US"
 
     return os_name, MAPPING.get(lang_code, "English")
-
-    #--------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------
 def check_registration(self): #For UnitFrom
     passed = False
+    # Windows
     if self.OS == "WIN":
         import winreg
-        try:
-            reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, self.WIN_KEY)
-            is_passed = winreg.QueryValueEx(reg_key, "Passed")
-            if is_passed[0] == "True":
-                passed = True
-                self.LANG = winreg.QueryValueEx(reg_key, "Language")
-                self.PATH = winreg.QueryValueEx(reg_key, "SearchPath")
-            winreg.CloseKey(reg_key)
-        except Exception:
-            pass
+        reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,f"Software\\{self.REG_KEY}")
+        is_passed = winreg.QueryValueEx(reg_key, "Passed")
+        if is_passed[0] == "True":
+            self.LANG = winreg.QueryValueEx(reg_key, "Language")
+            self.PATH = winreg.QueryValueEx(reg_key, "SearchPath")
+            passed = True
+        winreg.CloseKey(reg_key)
+    # MAC
     elif self.OS == "MAC":
-        pass
-    else: #self.OS = "LINUX"
-        pass
+        from pathlib import Path
+        import plistlib
+        plist_path = Path("~/Library/Preferences").expanduser() / f"{self.REG_KEY}.plist"
+        if  plist_path.exists():
+            with open(plist_path, "rb") as f:
+                data = plistlib.load(f)
+                if data.get("Passed") == "True":
+                    self.LANG = data.get("Language")
+                    self.PATH = data.get("SearchPath")
+                    passed = True
+    # Linux
+    elif self.OS == "LINUX":
+        import json
+        file = Path("~/.config").expanduser() / self.REG_KEY / "settings.json"
+        if file.exists():
+            with open(file, "r") as f:
+                data = json.load(f)
+                if data.get("Passed") == "True":
+                    self.LANG = data.get("Language")
+                    self.PATH = data.get("SearchPath")
+                    passed = True
     return passed
 #--------------------------------------------------------------------------------------
 def toggle_password_visibility(self,state):
@@ -95,31 +113,47 @@ def move_to_center(self):
 
 #--------------------------------------------------------------------------------------
 def get_registry_values(self):
-        if self.OS =="WIN":
-            import winreg
-            try:
-                reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
-                language,default_path= winreg.QueryValueEx(reg_key, "Language"), winreg.QueryValueEx(reg_key, "SearchPath")
-                winreg.CloseKey(reg_key)
-                return language[0],default_path[0]
-            except FileNotFoundError:
-                return  "English",os.path.expanduser("~")
-        elif self.OS == "MAC":
-            # elif sys.platform == "darwin":
-            # macOS: use NSUserDefaults
-            # from Foundation import NSUserDefaults
-            # self.defaults = NSUserDefaults.alloc().initWithSuiteName_(f"com.mycompany.{self.REG_KEY}")
-            # language = self.defaults.stringForKey_("Language")
-            # default_path = self.defaults.stringForKey_("SearchPath")
-            # language = "English"
-            # default_path = "~"
-            # return language, default_path
-            return "English",os.path.expanduser("~")
+    lang,path = "English",os.path.expanduser("~")
+    # Windows
+    if self.OS =="WIN":
+        import winreg
+        try:
+            reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
+            language,default_path= winreg.QueryValueEx(reg_key, "Language"), winreg.QueryValueEx(reg_key, "SearchPath")
+            winreg.CloseKey(reg_key)
+            lang,path = language[0],default_path[0]
+        except FileNotFoundError:
+            pass
+    # MAC
+    elif self.OS == "MAC":
+        from pathlib import Path
+        import plistlib
+        plist_path = Path("~/Library/Preferences").expanduser() / f"{self.REG_KEY}.plist"
+        if  plist_path.exists():
+            with open(plist_path, "rb") as f:
+                data = plistlib.load(f)
+                lang,path = data.get("Language"),data.get("SearchPath")
         else:
-            return "English",os.path.expanduser("~")
+            pass
+    # Linux
+    else:
+        import json
+        file = Path("~/.config").expanduser() /f"{self.REG_KEY} / settings.json"
+        if file.exists():
+            with open(file, "r") as f:
+                data = json.load(f)
+                lang,path = data.get("Language"),data.get("SearchPath")
+        else:
+            pass
+    return lang,path
 #----------------------------------------------------------------
 def create_registry(self):
-    from pathlib import Path
+    data = {
+            "Language": "English",
+            "SearchPath": "~/Documents",
+            "Passed": "True"
+            }
+    # Windows
     if self.OS == "WIN":
         import winreg
         reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
@@ -127,21 +161,37 @@ def create_registry(self):
         winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, os.path.expanduser("~")+"\\Documents")
         winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
         winreg.CloseKey(reg_key)
+    # MAC
     elif self.OS == "MAC":
-        pass
         # macOS: use plist
-        # plist_path = Path("~/Library/Preferences").expanduser() / f"{self.app_id}.plist"
-        # data = {"a": a, "b": b}
-
-        # try:
-        #     with open(plist_path, "wb") as f:
-        #         plistlib.dump(data, f)
-        # except Exception as e:
-        #     print("macOS plist save error:", e)
+        from pathlib import Path
+        import plistlib
+        plist_path = Path("~/Library/Preferences").expanduser() / f"{self.REG_KEY.lower()}.plist"
+        try:
+            with open(plist_path, "wb") as f:
+                plistlib.dump(data, f)
+        except Exception as e:
+            print("macOS plist save error:", e)
+    # Linux
     else:
-        pass
+        import json
+        config_dir = Path("~/.config").expanduser() / self.REG_KEY
+        config_dir.mkdir(parents=True, exist_ok=True)
+        
+        file = Path("~/.config").expanduser() / f"{self.REG_KEY} / settings.json"
+        try:
+            with file.open("w", encoding="utf-8") as f:
+                json.dump(data, f)
+        except Exception as e:
+                print("Linux save error:", e)
 #----------------------------------------------------------------   
 def saved_to_registry(self):
+        data = {
+                "Language": self.language,
+                "SearchPath": self.search_path,
+                "Passed": "True"
+            }
+        # Windows
         if self.OS == "WIN":
             import winreg
             reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
@@ -149,11 +199,30 @@ def saved_to_registry(self):
             winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
             winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
             winreg.CloseKey(reg_key)
+        # MAC
         elif self.OS == "MAC":
-            # macOS: use NSUserDefaults
-            pass
+            from pathlib import Path
+            import plistlib
+            plist_path = Path("~/Library/Preferences").expanduser() / f"{self.REG_KEY}.plist"
+            try:
+                with open(plist_path, "wb") as f:
+                    plistlib.dump(data, f)
+            except Exception as e:
+                print("macOS save error:", e)
+        # Linux
         else:
-            pass
+            import json
+            file = Path("~/.config").expanduser() / f"{self.REG_KEY} / settings.json"
+            data = {
+                "Language": "English",
+                "SearchPath": "~/Documents",
+                "Passed": "True"
+                }
+            try:
+                with file.open("w", encoding="utf-8") as f:
+                    json.dump(data, f)
+            except Exception as e:
+                    print("Linux save error:", e)
 #----------------------------------------------------------------
 def change_language(self):
     langs,labels,types,search =LANGUAGES,LABELS,TYPES,OPTIONS
@@ -168,7 +237,7 @@ def change_language(self):
     saved_to_registry(self)
     #Set the labels and combo box items based on the selected language
     self.setWindowTitle(labels[self.language]["Title"])
-    self.english_radio.setText(langs[self.language]["ENG"])  
+    self.english_radio.setText(langs[self.language]["ENG"])
     self.japanese_radio.setText(langs[self.language]["JP"])
     self.vietnamese_radio.setText(langs[self.language]["VN"])
     self.search_folder_label.setText(labels[self.language]["SearchPath"])
@@ -272,7 +341,7 @@ def open_file_location(self,item):
     except Exception as e:
         pass
         # QMessageBox.critical(self, "Error", f"{ERROR[self.language]["Open"]}:\n{e}")
-#-----------------------------------------------------------------------   
+#-----------------------------------------------------------------------
 def change_tooltips(self):
     self.search_folder_change.setToolTip(HINT["Dialog"][self.language])
     self.file_type_combo.setToolTip(HINT["Type"][self.language])
@@ -320,11 +389,11 @@ def show_data(self,source=1):
                 partial_path = folder.removeprefix(self.search_path)
                 if partial_path.startswith(os.path.sep):
                     partial_path = partial_path[1:]
-                self.found_folders_short.add(partial_path)    
+                self.found_folders_short.add(partial_path)
         if self.found_files:
             for file in self.found_files:
                 filename = os.path.basename(file)
-                self.found_files_short.append(filename)    
+                self.found_files_short.append(filename)
     else:
         if self.found_files:
             for file in self.found_files:
@@ -367,7 +436,7 @@ def update_time_counter(self):
 
     if self.elapsed >= self.limit_timer:
         self.stop_all()
-#-----------------------------------------------------------------------      
+#-----------------------------------------------------------------------
 
 def stop_all(self):
     self.timer.stop()
@@ -403,14 +472,14 @@ def search_files(self,source = 1):
                     if self.condition:
                         if os.path.isfile(os.path.join(root, name)):
                             self.found_files.append(os.path.join(root, name))
-                            self.found_folders.add(os.path.dirname(os.path.join(root, name)))             
+                            self.found_folders.add(os.path.dirname(os.path.join(root, name)))
         # Filter by file type
         if self.search_type or len(self.search_type)>0:
             self.found_files,folders = filter_type(self)
             self.found_folders = folders.intersection(self.found_folders)
         self.filtered_files, self.filtered_folders = self.found_files, self.found_folders
         show_data(self,source)
-    else:#Nothing selected 
+    else:#Nothing selected
         reset_data(self)
         if not self.init:
             show_empty(self)
@@ -484,10 +553,6 @@ def preview_word(self, filepath,max_lines=10):
             self.preview.setTextInteractionFlags(Qt.NoTextInteraction)  # Disable text interaction
         except:
             self.preview.setText("[Cannot preview Word file]")
-            
-            
-            
-            
 #----------------------------------------------------------------------
 def preview_excel(self, filepath, max_rows=10):
         try:
@@ -510,99 +575,3 @@ def resizeEvent(self, event):
         self.update_scaled_image()
     super().resizeEvent(event)
 #----------------------------------------------------------------------
-def save_Info(self):
-        if self.OS == "Windows":
-            self._save_windows()
-        elif self.OS == "Darwin":
-            self._save_macos()
-        elif self.OS == "Linux":
-            self._save_linux()
-
-def load_Info(self):
-    if self.OS == "Windows":
-        return self._load_windows()
-    elif self.OS == "Darwin":
-        return self._load_macos()
-    elif self.OS == "Linux":
-        return self._load_linux()
-    return None, None
-
-# =====================================================
-# WINDOWS — Registry
-# =====================================================
-def _save_windows(self):
-    import winreg
-    try:
-        reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, ui_main.InitInfo().WIN_KEY)
-        winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ, self.language)
-        winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
-        winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
-        winreg.CloseKey(reg_key)
-    except Exception as e:
-        print("Windows save error:", e)
-
-# def _load_windows(self):
-#     import winreg
-#     key_path = f"Software\\{self.app_name}"
-
-#     try:
-#         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path)
-#         name = winreg.QueryValueEx(key, "name")[0]
-#         age = winreg.QueryValueEx(key, "age")[0]
-#         winreg.CloseKey(key)
-#         return name, age
-#     except:
-#         return None, None
-
-# =====================================================
-# macOS — plist in ~/Library/Preferences/
-# =====================================================
-# def _save_macos(self, name, age):
-#     plist_path = Path("~/Library/Preferences").expanduser() / f"{self.mac_app_id}.plist"
-#     data = {"name": name, "age": age}
-
-#     try:
-#         with open(plist_path, "wb") as f:
-#             plistlib.dump(data, f)
-#     except Exception as e:
-#         print("macOS save error:", e)
-
-# def _load_macos(self):
-#     plist_path = Path("~/Library/Preferences").expanduser() / f"{self.mac_app_id}.plist"
-#     if not plist_path.exists():
-#         return None, None
-
-#     try:
-#         with open(plist_path, "rb") as f:
-#             data = plistlib.load(f)
-#         return data.get("name"), data.get("age")
-#     except:
-#         return None, None
-
-# =====================================================
-# LINUX — ~/.config/<appname>/settings.json
-# =====================================================
-# def _save_linux(self, name, age):
-#     config_dir = Path("~/.config").expanduser() / self.linux_dir
-#     config_dir.mkdir(parents=True, exist_ok=True)
-
-#     file = config_dir / "settings.json"
-#     data = {"name": name, "age": age}
-
-#     try:
-#         with open(file, "w") as f:
-#             json.dump(data, f, indent=4)
-#     except Exception as e:
-#         print("Linux save error:", e)
-
-# def _load_linux(self):
-#     file = Path("~/.config").expanduser() / self.linux_dir / "settings.json"
-#     if not file.exists():
-#         return None, None
-
-#     try:
-#         with open(file, "r") as f:
-#             data = json.load(f)
-#         return data.get("name"), data.get("age")
-#     except:
-#         return None, None

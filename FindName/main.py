@@ -1,8 +1,7 @@
 # main.py
 import sys
-from pc_system import PCSettings
 from PySide6.QtWidgets import QApplication
-from ui_main import InitInfo,CheckForm ,FileSearchHandler
+from ui_main import CheckForm,InitInfo ,FileSearchHandler
 from actions import check_registration
 def main():
     app = QApplication(sys.argv)

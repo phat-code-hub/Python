@@ -55,5 +55,6 @@
     "terminal.integrated.allowChords": false,
     "auto-rename-tag.activationOnLanguage": [
         "*"
-    ]
+    ],
+    "codeium.enableSearch": false
 }

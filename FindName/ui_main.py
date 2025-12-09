@@ -7,21 +7,12 @@ from PySide6.QtGui import QIcon
 from actions import *
 from languages import *
 
-# import platform
-# import locale
-# import json
-# import plistlib
-from  languages import REG_KEY
-from pathlib import Path
-
 class InitInfo():
-    def __init__(self) :
+    
+    def __init__(self):
+        super().__init__()
         self.REG_KEY = REG_KEY
-        self.WIN_KEY = f"Software\\{self.REG_KEY}"
-        self.MAC_KEY = f"com.mycompany.{self.REG_KEY.lower()}" # plist file name
-        self.LINUX_KEY = f"/etc/{self.REG_KEY.lower()}" # ~/.config/myapp/
-        self.OS,self.LANG= get_os_and_language(self)
-
+        self.OS,self.LANG= PC_Info(self)
 #---------------------------------------------------------------------------
 class CheckForm(QWidget):
     def __init__(self):
@@ -63,6 +54,7 @@ class TimePopup(QDialog):
         move_to_center(self)
         self.setWindowTitle(InitInfo().REG_KEY)
         self.setWindowFlags(Qt.Tool | Qt.WindowStaysOnTopHint)
+        # self.label = QLabel("Searching..., please wait")
         self.label = QLabel()
         self.label.setStyleSheet("font-size: 18px; padding: 10px;color:black")
         self.setStyleSheet("background-color: #f0f0f0;")
@@ -85,11 +77,6 @@ class FileSearch(QWidget):
         self.REG_KEY = InitInfo().REG_KEY
         self.OS = InitInfo().OS
         self.language,self.search_path = get_registry_values(self)
-        #Read/Write to registry variable
-        self.WIN_KEY = f"Software\\{self.REG_KEY}"
-        self.MAC_KEY = f"com.mycompany.{self.REG_KEY}"
-        self.LINUX_KEY = f"/etc/{self.REG_KEY}"
-        self.app_id = f"{self.REG_KEY}" # For MAC
         self.APP_NAME = TITLE[self.language]
         self.lang = LANGUAGES
         self.options = OPTIONS
@@ -275,10 +262,10 @@ class FileSearchHandler(FileSearch):
         elif self.language == 'Japanese':
             self.japanese_radio.setChecked(True)
         else:
-            self.vietnamese_radio.setChecked(True)  
+            self.vietnamese_radio.setChecked(True)
 
         self.search_radio.button(self.logic_index).setChecked(True)
-        self.file_type_combo.setCurrentIndex(self.type_index)        
+        self.file_type_combo.setCurrentIndex(self.type_index)
         #initialize values
         self.search_folder_path.setText(self.search_path)
         self.search_type = self.ext_type[self.type_index]
@@ -317,7 +304,7 @@ class FileSearchHandler(FileSearch):
     def closeEvent(self, event):
         # Save to Windows Registry before closing
         try:
-            save_Info(self)
+            saved_to_registry(self)
         except Exception as e:
             print(f"Registry write failed: {e}")
 

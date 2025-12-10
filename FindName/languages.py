@@ -106,7 +106,8 @@ TYPES ={
     8:{"English": 'Word Files', 'Japanese': 'Word ファイル',  "Vietnamese": "Tập tin Word"},
     9:{"English": 'Text Files', 'Japanese': 'テキスト ファイル',"Vietnamese": "Tập tin text"},
     10:{"English": 'Audio Files', 'Japanese': '音声 ファイル',"Vietnamese": "Tập tin âm thanh"},
-    11:{"English": 'Executable Files', 'Japanese': '実行可能 ファイル', "Vietnamese": "Tập tin thực thi"}
+    11:{"English": 'Program Files', 'Japanese': 'プログラム ファイル', "Vietnamese": "Tập tin chương trình"},
+    12:{"English": 'Executable Files', 'Japanese': '実行可能 ファイル', "Vietnamese": "Tập tin thực thi"}
     }
 
 OPTIONS ={"English":{"AND":"All matched","OR":"Contain","NOT"  :"Not contain"},
@@ -161,7 +162,7 @@ EXTENSIONS ={
     1: [".vwx",".vwxp",".vwxw",".sta"],
     2: [".vwx",".sta",".mcd",".dwg", ".step", ".stp","dxf",
                 ".CAT",".iges", ".igs", ".sldprt", ".sldasm", ".prt"],
-    3: [".xl",".xlsx",".xlsm",".xlsb",".xltx",".xltm",".xlt",".csv",".numbers"],
+    3: [".xls",".xlsx",".xlsm",".xlsb",".xltx",".xltm",".xlt",".csv",".numbers"],
     4: [".pdf"],
     5: ["dxf"],
     6: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg","png"],
@@ -170,7 +171,8 @@ EXTENSIONS ={
     9: [".txt", ".doc", ".docx", ".odt", ".rtf",".ini",".log" ,".csv" ,
         ".md",".yml",".yaml",".json"],
     10: [".mp3", ".wav", ".aac", ".flac", ".ogg"],
-    11: [".exe", ".msi", ".bat", ".cmd",".pkg",".sh", ".app", ".jar", ".py", ".pyw", ".pyc"]
+    11: [".py", ".java", ".js", ".c",".cpp",".php", ".rb", ".html", ".htm", ".css", ".cs",".frx","frm","bas","cls","vba"],
+    12: [".exe", ".msi", ".bat", ".cmd",".pkg",".sh", ".app", ".jar",  ".pyw", ".pyc"],
     }
 TEXT_EXT = [
         ".txt",
@@ -182,6 +184,14 @@ TEXT_EXT = [
         ".log",
         ".json"
     ]
+VIEW_EXT = {
+    "text":[3,4,6,8,9],
+    "cad" :[1,2,5],
+    "prog":[11],
+    "media":[7,10],
+    "other":[12]
+}
+
 CAD_EXT = ['.vwx', '.dwg', '.dxf']
 LOGICS ={
     "OR":0,

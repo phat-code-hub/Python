@@ -5,6 +5,7 @@ import openpyxl
 import platform
 import ui_main
 import locale
+import txt_view
 # from  languages import ERROR
 from languages import *
 from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit,QApplication
@@ -448,7 +449,6 @@ def search_files(self,source = 1):
     keyword = self.search_input.text().strip()
     self.info.setText(self.label[self.language]["message"])
     if keyword :
-        # update_time_counter(self)
         self.init = False
         self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip().lower())
         if  len(self.keywords)==1 and self.keywords[0] in ["*","*.*","."]:
@@ -489,23 +489,38 @@ def clear_preview(self):
     self.preview.clear()
     self.preview.setText("")
 #---------------------------------------------------------------------
+def resizeEvent(self, event):
+    if hasattr(self, "original_pixmap") and self.original_pixmap:
+        self.update_scaled_image()
+    super().resizeEvent(event)
+#----------------------------------------------------------------------
 def preview_file(self,path)    :
     ext = os.path.splitext(path)[1].lower()
-    # Check supported types
-    supported_ext = [b"." + fmt for fmt in QImageReader.supportedImageFormats()]
+    kind =[ i  for i,(k,v) in enumerate(EXTENSIONS.items()) if ext in v][0]
+    filetype = [k for k,v in VIEW_EXT.items() if kind in v][0]
     clear_preview(self)
-    if ext.encode() in supported_ext:
-        preview_image(self, path)
-    elif ext in TEXT_EXT:
-        preview_text(self,path)
-    elif ext == ".docx":
-        preview_word(self,path)
-    elif ext == ".xlsx":
-        preview_excel(self,path)
-    elif ext in CAD_EXT:
-        self.preview.setText("[Cannot preview CAD file]")
-    else:
+    if filetype == "other": 
         self.preview.setText("[Unsupported file type]")
+    else:
+        if filetype == "text":
+            txt_view.main_txt(self,path,ext,kind,filetype)
+    # Check supported types
+    
+    
+    
+    # if ext.encode() in supported_ext:
+        
+    #     preview_image(self, path)
+    # elif ext in TEXT_EXT:
+    #     preview_text(self,path)
+    # elif ext == ".docx":
+    #     preview_word(self,path)
+    # elif ext == ".xlsx":
+    #     preview_excel(self,path)
+    # elif ext in CAD_EXT:
+    #     self.preview.setText("[Cannot preview CAD file]")
+    # else:
+    #     self.preview.setText("[Unsupported file type]")
 #----------------------------------------------------------------------
 def preview_image(self, filepath):
         pixmap = QPixmap(filepath)
@@ -570,8 +585,3 @@ def preview_excel(self, filepath, max_rows=10):
         except:
             self.preview.setText("[Cannot preview Excel file]")
 # -----------------------------------------
-def resizeEvent(self, event):
-    if hasattr(self, "original_pixmap") and self.original_pixmap:
-        self.update_scaled_image()
-    super().resizeEvent(event)
-#----------------------------------------------------------------------

@@ -101,7 +101,7 @@ def main_media(self, filepath, ext, order):
             self.preview.setLayout(QVBoxLayout())
 
         # Ensure bottom layout exists
-       # HARD RESET bottom_area: remove ALL child widgets
+        # HARD RESET bottom_area: remove ALL child widgets
         for child in self.bottom_area.findChildren(QWidget):
             child.setParent(None)
             child.deleteLater()

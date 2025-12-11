@@ -219,18 +219,47 @@ class FileSearch(QWidget):
         self.preview.setContentsMargins(0, 0, 0, 0)  # Remove margins to allow resizing
         self.preview.setAlignment(Qt.AlignCenter)
         
-        layoutR.addWidget(self.preview)
+        # Add a second widget under preview pane (for audio/video controls later)
+        self.bottom_area = QWidget()
+        self.bottom_area.setMinimumHeight(120)
+        self.bottom_area.setStyleSheet("border: 1px solid lightgray; background: #fafafa;")
+    
+        # Create vertical splitter inside right pane
+        right_splitter = QSplitter(Qt.Vertical)
+        right_splitter.addWidget(self.preview)
+        right_splitter.addWidget(self.bottom_area)
+        right_splitter.setSizes([350, 150])   # default size distribution
         
+        # Put this vertical splitter into right panel layout
+        layoutR = QVBoxLayout()
+        layoutR.addWidget(right_splitter)
+        
+        # Left–right splitter (existing)
         splitter = QSplitter(Qt.Horizontal)
+
         left_panel = QWidget()
-        right_panel =QWidget()
-        
         left_panel.setLayout(layoutL)
+
+        right_panel = QWidget()
         right_panel.setLayout(layoutR)
 
         splitter.addWidget(left_panel)
         splitter.addWidget(right_panel)
         splitter.setSizes([700, 300])
+        
+        
+        # layoutR.addWidget(self.preview)
+        
+        # splitter = QSplitter(Qt.Horizontal)
+        # left_panel = QWidget()
+        # right_panel =QWidget()
+        
+        # left_panel.setLayout(layoutL)
+        # right_panel.setLayout(layoutR)
+
+        # splitter.addWidget(left_panel)
+        # splitter.addWidget(right_panel)
+        # splitter.setSizes([700, 300])
         
         main_layout = QVBoxLayout()
         main_layout.addWidget(splitter)

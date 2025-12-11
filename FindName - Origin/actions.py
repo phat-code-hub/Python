@@ -1,35 +1,83 @@
 # actions.py
 #--------------------------------------------------------------------------------------
 import os
-import sys
-# import platform
 import openpyxl
-from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit
-from PySide6.QtCore import Qt,QUrl
-from languages import *
-from PySide6.QtGui import QFontMetrics,QDesktopServices
+import platform
 import ui_main
-from PySide6.QtGui import QPixmap,QImageReader
+import locale
+from txt_view import main_txt
+from media_view import main_media
+from languages import *
+from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit,QApplication
+from PySide6.QtCore import Qt,QUrl
+from PySide6.QtGui import QFontMetrics,QDesktopServices,QPixmap,QImageReader 
 
 #--------------------------------------------------------------------------------------
+def PC_Info(self):
+    system = platform.system()
 
-def check_registration(self):
+    # Detect OS
+    if system == "Windows":
+        os_name = "WIN"
+        lang, _ = locale.getdefaultlocale()
+        lang_code = lang or "en_US"
+
+    elif system == "Darwin":  # macOS
+        os_name = "MAC"
+        lang_code = os.environ.get("LANG", "")
+        lang_code = lang_code.split(".")[0] if "." in lang_code else lang_code
+
+        if not lang_code:
+            lang_code, _ = locale.getdefaultlocale()
+
+    elif system == "Linux":
+        os_name = "LINUX"
+        lang_code = os.environ.get("LANG", "")
+        lang_code = lang_code.split(".")[0] if "." in lang_code else lang_code
+
+        if not lang_code:
+            lang_code, _ = locale.getdefaultlocale()
+    else:
+        os_name = "UNKNOWN"
+        lang_code = "en_US"
+
+    return os_name, MAPPING.get(lang_code, "English")
+#--------------------------------------------------------------------------------------
+def check_registration(self): #For UnitFrom
     passed = False
+    # Windows
     if self.OS == "WIN":
         import winreg
-        try:
-            reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\\FileSearch")
-            is_passed = winreg.QueryValueEx(reg_key, "Passed")
-            if is_passed[0] == "True":
-                passed = True
-            winreg.CloseKey(reg_key)    
-        except Exception:
-            passed=False
+        reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,f"Software\\{self.REG_KEY}")
+        is_passed = winreg.QueryValueEx(reg_key, "Passed")
+        if is_passed[0] == "True":
+            self.LANG = winreg.QueryValueEx(reg_key, "Language")
+            self.PATH = winreg.QueryValueEx(reg_key, "SearchPath")
+            passed = True
+        winreg.CloseKey(reg_key)
+    # MAC
     elif self.OS == "MAC":
-        pass
-    else: 
-        # self.OS = "LINUX"
-        pass
+        from pathlib import Path
+        import plistlib
+        plist_path = Path("~/Library/Preferences").expanduser() / f"{self.REG_KEY}.plist"
+        if  plist_path.exists():
+            with open(plist_path, "rb") as f:
+                data = plistlib.load(f)
+                if data.get("Passed") == "True":
+                    self.LANG = data.get("Language")
+                    self.PATH = data.get("SearchPath")
+                    passed = True
+    # Linux
+    elif self.OS == "LINUX":
+        import json
+        file = Path("~/.config").expanduser() / self.REG_KEY / "settings.json"
+        if file.exists():
+            with open(file, "r") as f:
+                data = json.load(f)
+                if data.get("Passed") == "True":
+                    self.LANG = data.get("Language")
+                    self.PATH = data.get("SearchPath")
+                    passed = True
     return passed
 #--------------------------------------------------------------------------------------
 def toggle_password_visibility(self,state):
@@ -38,7 +86,7 @@ def toggle_password_visibility(self,state):
     else:
         self.password_input.setEchoMode(QLineEdit.Password)
 #--------------------------------------------------------------------------------------
-def check_password(self,password):
+def check_license(self,password):
     import re
     # if re.match(r"^0\w*",password):
     # if ("11" in password) and ("3" in password):
@@ -47,49 +95,104 @@ def check_password(self,password):
         create_registry(self)
         ui_main.FileSearchHandler().show()
     else:
-        QMessageBox.critical(None, "Error", "Incorrect password.")
+        QMessageBox.critical(None, ERROR[self.LANG]["Title"],ERROR[self.LANG]["Message"])
         self.close()
 #--------------------------------------------------------------------------------------
+def move_to_center(self):
+        # Get the screen geometry of the primary screen
+        screen = QApplication.primaryScreen()
+        screen_geometry = screen.availableGeometry()
+
+        # Get the geometry of the window
+        window_geometry = self.frameGeometry()
+
+        # Move center of window geometry to center of screen
+        window_geometry.moveCenter(screen_geometry.center())
+
+        # Move the top-left of the window to match the new center
+        self.move(window_geometry.topLeft())
+
+#--------------------------------------------------------------------------------------
 def get_registry_values(self):
-        if self.OS =="WIN":
-            import winreg
-            try:
-                reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
-                language,default_path= winreg.QueryValueEx(reg_key, "Language"), winreg.QueryValueEx(reg_key, "SearchPath")
-                winreg.CloseKey(reg_key)
-                return language[0],default_path[0]
-            except FileNotFoundError:
-                return  "English",os.path.expanduser("~")
-        elif self.OS == "MAC":
-            # elif sys.platform == "darwin":
-            # macOS: use NSUserDefaults
-            # from Foundation import NSUserDefaults
-            # self.defaults = NSUserDefaults.alloc().initWithSuiteName_(f"com.mycompany.{self.REG_KEY}")
-            # language = self.defaults.stringForKey_("Language")
-            # default_path = self.defaults.stringForKey_("SearchPath")
-            # language = "English"
-            # default_path = "~"
-            # return language, default_path
-            return "English",os.path.expanduser("~")
+    lang,path = "English",os.path.expanduser("~")
+    # Windows
+    if self.OS =="WIN":
+        import winreg
+        try:
+            reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
+            language,default_path= winreg.QueryValueEx(reg_key, "Language"), winreg.QueryValueEx(reg_key, "SearchPath")
+            winreg.CloseKey(reg_key)
+            lang,path = language[0],default_path[0]
+        except FileNotFoundError:
+            pass
+    # MAC
+    elif self.OS == "MAC":
+        from pathlib import Path
+        import plistlib
+        plist_path = Path("~/Library/Preferences").expanduser() / f"{self.REG_KEY}.plist"
+        if  plist_path.exists():
+            with open(plist_path, "rb") as f:
+                data = plistlib.load(f)
+                lang,path = data.get("Language"),data.get("SearchPath")
         else:
-            return "English",os.path.expanduser("~")
+            pass
+    # Linux
+    else:
+        import json
+        file = Path("~/.config").expanduser() /f"{self.REG_KEY} / settings.json"
+        if file.exists():
+            with open(file, "r") as f:
+                data = json.load(f)
+                lang,path = data.get("Language"),data.get("SearchPath")
+        else:
+            pass
+    return lang,path
 #----------------------------------------------------------------
 def create_registry(self):
-        if self.OS == "WIN":
-            import winreg
-            # reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\FileSearch")
-            reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
-            winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ,"English")
-            winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, os.path.expanduser("~")+"\\Documents")
-            winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
-            winreg.CloseKey(reg_key)
-        elif self.OS == "MAC":
-            # macOS: use NSUserDefaults
-            pass
-        else:
-            pass
+    data = {
+            "Language": "English",
+            "SearchPath": "~/Documents",
+            "Passed": "True"
+            }
+    # Windows
+    if self.OS == "WIN":
+        import winreg
+        reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
+        winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ,"English")
+        winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, os.path.expanduser("~")+"\\Documents")
+        winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
+        winreg.CloseKey(reg_key)
+    # MAC
+    elif self.OS == "MAC":
+        # macOS: use plist
+        from pathlib import Path
+        import plistlib
+        plist_path = Path("~/Library/Preferences").expanduser() / f"{self.REG_KEY.lower()}.plist"
+        try:
+            with open(plist_path, "wb") as f:
+                plistlib.dump(data, f)
+        except Exception as e:
+            print("macOS plist save error:", e)
+    # Linux
+    else:
+        import json
+        config_dir = Path("~/.config").expanduser() / self.REG_KEY
+        config_dir.mkdir(parents=True, exist_ok=True)
+        
+        file = Path("~/.config").expanduser() / f"{self.REG_KEY} / settings.json"
+        try:
+            with file.open("w", encoding="utf-8") as f:
+                json.dump(data, f)
+        except Exception as e:
+                print("Linux save error:", e)
 #----------------------------------------------------------------   
 def saved_to_registry(self):
+        data = {
+                "Language": self.language,
+                "SearchPath": self.search_path,
+                "Passed": "True"
+            }
+        # Windows
         if self.OS == "WIN":
             import winreg
             reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
@@ -97,11 +200,30 @@ def saved_to_registry(self):
             winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, self.search_path)
             winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
             winreg.CloseKey(reg_key)
+        # MAC
         elif self.OS == "MAC":
-            # macOS: use NSUserDefaults
-            pass
+            from pathlib import Path
+            import plistlib
+            plist_path = Path("~/Library/Preferences").expanduser() / f"{self.REG_KEY}.plist"
+            try:
+                with open(plist_path, "wb") as f:
+                    plistlib.dump(data, f)
+            except Exception as e:
+                print("macOS save error:", e)
+        # Linux
         else:
-            pass
+            import json
+            file = Path("~/.config").expanduser() / f"{self.REG_KEY} / settings.json"
+            data = {
+                "Language": "English",
+                "SearchPath": "~/Documents",
+                "Passed": "True"
+                }
+            try:
+                with file.open("w", encoding="utf-8") as f:
+                    json.dump(data, f)
+            except Exception as e:
+                    print("Linux save error:", e)
 #----------------------------------------------------------------
 def change_language(self):
     langs,labels,types,search =LANGUAGES,LABELS,TYPES,OPTIONS
@@ -116,7 +238,7 @@ def change_language(self):
     saved_to_registry(self)
     #Set the labels and combo box items based on the selected language
     self.setWindowTitle(labels[self.language]["Title"])
-    self.english_radio.setText(langs[self.language]["ENG"])  
+    self.english_radio.setText(langs[self.language]["ENG"])
     self.japanese_radio.setText(langs[self.language]["JP"])
     self.vietnamese_radio.setText(langs[self.language]["VN"])
     self.search_folder_label.setText(labels[self.language]["SearchPath"])
@@ -148,11 +270,10 @@ def open_file_dialog(self):
         self.search_folder_path.setText(folder_path)
         search_files(self)
     else:
-        show_empty()
+        show_empty(self)
 #----------------------------------------------------------------
 #Search from search pattern
 def change_search_source(self,source =1):
-    # self.init = True
     if self.search_input.text().strip() :
         if source == 2:
             if self.folder_list.currentItem() is None:
@@ -160,9 +281,12 @@ def change_search_source(self,source =1):
             else:
                 self.search_path = os.path.join(self.search_path,self.folder_list.selectedItems()[0].text())
         self.search_folder_path.setText(self.search_path)
-        self.info.setText(self.label[self.language]["message"])
+        if self.init:
+            self.init = False
+        if not self.init:
+            self.info.setText(self.label[self.language]["message"])
+        # start_process(self)
         search_files(self,source = source)
-        # self.popup()
     else:
         if not self.init:
             show_empty(self)
@@ -200,7 +324,7 @@ def show_file_info(self,current):
         #Get file name
         short_path =fm.elidedText(self.found_files[self.file_list.row(current)],Qt.ElideMiddle,600)
         self.info.setText(short_path)
-        preview_file(self,full_path)
+        preview_file(self,full_path,short_path)
     else:
         self.info.setText("")
 #-----------------------------------------------------------------------   
@@ -208,16 +332,17 @@ def open_file_location(self,item):
     import subprocess
     filepath = os.path.dirname(self.found_files[self.file_list.row(item)])
     try:
-        # --- use one unified method ---
-        if sys.platform.startswith("win"):
+        if self.OS == "WIN":
+        # if sys.platform.startswith("win"):
             QDesktopServices.openUrl(QUrl.fromLocalFile(filepath))
-        elif sys.platform.startswith("darwin"):
+        elif self.OS == "MAC":
             subprocess.run(["open", filepath])
         else:  # Linux and others
             subprocess.run(["xdg-open", filepath])
     except Exception as e:
-        QMessageBox.critical(self, "Error", f"Failed to open folder:\n{e}")
-#-----------------------------------------------------------------------   
+        pass
+        # QMessageBox.critical(self, "Error", f"{ERROR[self.language]["Open"]}:\n{e}")
+#-----------------------------------------------------------------------
 def change_tooltips(self):
     self.search_folder_change.setToolTip(HINT["Dialog"][self.language])
     self.file_type_combo.setToolTip(HINT["Type"][self.language])
@@ -238,18 +363,18 @@ def reset_data(self):
     self.found_folders_short = set()
 #-----------------------------------------------------------------------
 def show_empty(self):
-        reset_data(self)
-        for root, dirs, _ in os.walk(self.search_path):
-            if dirs:
-                for dir in dirs:
-                    self.found_folders.add(os.path.join(root, dir))
-        if self.found_folders:
-            for folder in self.found_folders:
-                partial_path = folder.removeprefix(self.search_path)
-                if partial_path.startswith(os.path.sep):
-                    partial_path = partial_path[1:]
-                self.found_folders_short.add(partial_path)
-        show_data(self)
+    reset_data(self)
+    for root, dirs, _ in os.walk(self.search_path):
+        if dirs:
+            for dir in dirs:
+                self.found_folders.add(os.path.join(root, dir))
+    if self.found_folders:
+        for folder in self.found_folders:
+            partial_path = folder.removeprefix(self.search_path)
+            if partial_path.startswith(os.path.sep):
+                partial_path = partial_path[1:]
+            self.found_folders_short.add(partial_path)
+    show_data(self)
 #-----------------------------------------------------------------------
 def show_data(self,source=1):
     self.file_list.clear()
@@ -265,11 +390,11 @@ def show_data(self,source=1):
                 partial_path = folder.removeprefix(self.search_path)
                 if partial_path.startswith(os.path.sep):
                     partial_path = partial_path[1:]
-                self.found_folders_short.add(partial_path)    
+                self.found_folders_short.add(partial_path)
         if self.found_files:
             for file in self.found_files:
                 filename = os.path.basename(file)
-                self.found_files_short.append(filename)    
+                self.found_files_short.append(filename)
     else:
         if self.found_files:
             for file in self.found_files:
@@ -293,147 +418,98 @@ def filter_type(self):
             if any(file.lower().endswith(ext) for ext in self.search_type):
                 filtered_files.append(file)
                 dirname= os.path.dirname(file)
-                if dirname.startswith(os.path.sep):
+                if dirname.startswith(os.path.sep) and self.OS != "MAC":
                     partial_path = partial_path[1:]
                     dirname = dirname[1:]
                 filtered_folders.add(dirname)
     return filtered_files, filtered_folders
 #-----------------------------------------------------------------------
-def search_files(self,source =1):
+def start_process(self):
+    self.elapsed = 0
+    # Show popup
+    self.popup.update_time(0)
+    self.popup.show()
+    self.timer.start(0)
+#-----------------------------------------------------------------------
+def update_time_counter(self):
+    self.elapsed += 1
+    self.popup.update_time(self.elapsed)
+
+    if self.elapsed >= self.limit_timer:
+        self.stop_all()
+#-----------------------------------------------------------------------
+
+def stop_all(self):
+    self.timer.stop()
+    self.popup.close()
+#-----------------------------------------------------------------------
+def search_files(self,source = 1):
     import re
-    if source == 1:
-        reset_data(self)
-        keyword = self.search_input.text().strip()
-        self.info.setText(self.label[self.language]["message"])
-        if keyword :
-            self.init = False
-            self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip().lower())
-            if  len(self.keywords)==1 and self.keywords[0] in ["*","*.*","."]:
-                for root, dirs, files in os.walk(self.search_path):
-                    for name in files + dirs:
-                        if os.path.isfile(os.path.join(root, name)):
-                                    self.found_files.append(os.path.join(root, name))
-                                    self.found_folders.add(os.path.dirname(os.path.join(root, name)))
-                        elif os.path.isdir(os.path.join(root, name)):
-                            self.found_folders.add(os.path.join(root, name))
-            else:
-                for root, dirs, files in os.walk(self.search_path):
-                    # Check if any file or folder name matches any part of the search pattern
-                    for name in files + dirs:
-                        if self.logic_index == 0: #OR
-                            self.condition =any(part in name.lower() for part in self.keywords)
-                        elif self.logic_index == 1:#AND
-                            self.condition =all(part in name.lower() for part in self.keywords)
-                        else:#NOT
-                            self.condition =not all(part in name.lower() for part in self.keywords)
-                        if self.condition:
-                            if os.path.isfile(os.path.join(root, name)):
+    reset_data(self)
+    keyword = self.search_input.text().strip()
+    self.info.setText(self.label[self.language]["message"])
+    if keyword :
+        self.init = False
+        self.keywords = re.split(r'[ ,;:/|]+', self.search_input.text().strip().lower())
+        if  len(self.keywords)==1 and self.keywords[0] in ["*","*.*","."]:
+            for root, dirs, files in os.walk(self.search_path):
+                for name in files + dirs:
+                    if os.path.isfile(os.path.join(root, name)):
                                 self.found_files.append(os.path.join(root, name))
-                                self.found_folders.add(os.path.dirname(os.path.join(root, name)))             
-            # Filter by file type
-            if self.search_type or len(self.search_type)>0:
-                self.found_files,folders = filter_type(self)
-                self.found_folders = folders.intersection(self.found_folders)
-            self.filtered_files, self.filtered_folders = self.found_files, self.found_folders
-            show_data(self,source)
-        else:#Nothing selected 
-            reset_data(self)
-            # self.file_list.clear()
-            # self.folder_list.clear()
-            if not self.init:
-                show_empty(self)
+                                self.found_folders.add(os.path.dirname(os.path.join(root, name)))
+                    elif os.path.isdir(os.path.join(root, name)):
+                        self.found_folders.add(os.path.join(root, name))
+        else:
+            for root, dirs, files in os.walk(self.search_path):
+                # Check if any file or folder name matches any part of the search pattern
+                for name in files + dirs:
+                    if self.logic_index == 0: #OR
+                        self.condition =any(part in name.lower() for part in self.keywords)
+                    elif self.logic_index == 1:#AND
+                        self.condition =all(part in name.lower() for part in self.keywords)
+                    else:#NOT
+                        self.condition =not all(part in name.lower() for part in self.keywords)
+                    if self.condition:
+                        if os.path.isfile(os.path.join(root, name)):
+                            self.found_files.append(os.path.join(root, name))
+                            self.found_folders.add(os.path.dirname(os.path.join(root, name)))
+        # Filter by file type
+        if self.search_type or len(self.search_type)>0:
+            self.found_files,folders = filter_type(self)
+            self.found_folders = folders.intersection(self.found_folders)
+        self.filtered_files, self.filtered_folders = self.found_files, self.found_folders
+        show_data(self,source)
+    else:#Nothing selected
+        reset_data(self)
+        if not self.init:
+            show_empty(self)
+    stop_all(self)
 #----------------------------------------------------------------------
 def clear_preview(self):
     self.preview.clear()
     self.preview.setText("")
 #---------------------------------------------------------------------
-def preview_file(self,path)    :
-    ext = os.path.splitext(path)[1].lower()
-    # Check supported types
-    supported_ext = [b"." + fmt for fmt in QImageReader.supportedImageFormats()]
-    clear_preview(self)
-    if ext.encode() in supported_ext:
-        preview_image(self, path)
-    elif ext in TEXT_EXT:
-        preview_text(self,path)
-    elif ext == ".docx":
-        preview_word(self,path)
-    elif ext == ".xlsx":
-        preview_excel(self,path)
-    elif ext in CAD_EXT:
-        self.preview.setText("[Cannot preview CAD file]")
-    else:
-        self.preview.setText("[Unsupported file type]")
-#----------------------------------------------------------------------
-def preview_image(self, filepath):
-        pixmap = QPixmap(filepath)
-        if pixmap.isNull():
-            self.preview.setText("[Cannot load image]")
-        else:
-            self.original_pixmap = pixmap   # ← store original full-quality image
-            update_scaled_image(self)
-#----------------------------------------------------------------------
-def update_scaled_image(self):
-        if self.original_pixmap is None:
-            return
-        scaled = self.original_pixmap.scaled(
-            self.preview.width(),
-            self.preview.height(),
-            Qt.KeepAspectRatio,
-            Qt.SmoothTransformation   # ← smoother resize!
-        )
-        self.preview.setPixmap(scaled)
-#----------------------------------------------------------------------
-
-def preview_text(self, filepath):
-        try:
-            with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
-                content = f.read()
-            self.preview.setText(content)
-        except:
-            self.preview.setText("[Cannot read text file]")
-#----------------------------------------------------------------------
-def preview_word(self, filepath,max_lines=10):
-        from docx import Document
-        from docx.shared import Pt
-        try:
-            doc = Document(filepath)
-            text =""
-            for paragraph in doc.paragraphs:
-                for run in paragraph.runs:
-                    text += run.text +" "
-                text +="\n"
-                if max_lines and len(text.splitlines()) >= max_lines:
-                    break
-            text = text.rstrip()  # Remove trailing newline character
-            self.preview.setText(text.rstrip() if text else "[Empty Word document]")
-            self.preview.setAlignment(Qt.AlignLeft | Qt.AlignTop)  # Set alignment to left and top
-            self.preview.setTextInteractionFlags(Qt.NoTextInteraction)  # Disable text interaction
-        except:
-            self.preview.setText("[Cannot preview Word file]")
-            
-            
-            
-            
-#----------------------------------------------------------------------
-def preview_excel(self, filepath, max_rows=10):
-        try:
-            wb = openpyxl.load_workbook(filepath, read_only=True)
-            ws = wb.active
-            text = ""
-            for i, row in enumerate(ws.iter_rows(values_only=True)):
-                text += "\t".join([str(cell) if cell is not None else "" for cell in row]) + "\n"
-                if i + 1 >= max_rows:
-                    break
-            text = text.rstrip()  # Remove trailing newline character
-            self.preview.setText(text if text else "[Empty Excel sheet]")
-            self.preview.setAlignment(Qt.AlignLeft | Qt.AlignTop)  # Set alignment to left and top
-            self.preview.setTextInteractionFlags(Qt.NoTextInteraction)  # Disable text interaction
-        except:
-            self.preview.setText("[Cannot preview Excel file]")
-# -----------------------------------------
 def resizeEvent(self, event):
     if hasattr(self, "original_pixmap") and self.original_pixmap:
         self.update_scaled_image()
     super().resizeEvent(event)
 #----------------------------------------------------------------------
+def preview_file(self,path)    :
+    clear_preview(self)
+    ext = os.path.splitext(path)[1].lower()
+    ord_list =[ i  for i,(k,v) in enumerate(EXTENSIONS.items()) if ext in v] or [0]# Index of file in EXTENSIONS
+    if ord_list[0] == 0 :
+        self.preview.setText("[Unsupported file type]")
+        return
+    else:
+        ord = ord_list[0]
+        
+    filetype = [k for k,v in VIEW_EXT.items() if ord in v][0]#Type to choose Preview code 
+    
+    if filetype == "other":
+        self.preview.setText("[Unsupported file type]")
+        return
+    elif filetype == "text":
+        main_txt(self,path,ext,ord)
+    elif filetype == "media":
+        main_media(self,path,ext,ord)

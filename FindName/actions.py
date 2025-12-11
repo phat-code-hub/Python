@@ -5,8 +5,8 @@ import openpyxl
 import platform
 import ui_main
 import locale
-import txt_view
-# from  languages import ERROR
+from txt_view import main_txt
+from media_view import main_media
 from languages import *
 from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit,QApplication
 from PySide6.QtCore import Qt,QUrl
@@ -363,18 +363,18 @@ def reset_data(self):
     self.found_folders_short = set()
 #-----------------------------------------------------------------------
 def show_empty(self):
-        reset_data(self)
-        for root, dirs, _ in os.walk(self.search_path):
-            if dirs:
-                for dir in dirs:
-                    self.found_folders.add(os.path.join(root, dir))
-        if self.found_folders:
-            for folder in self.found_folders:
-                partial_path = folder.removeprefix(self.search_path)
-                if partial_path.startswith(os.path.sep):
-                    partial_path = partial_path[1:]
-                self.found_folders_short.add(partial_path)
-        show_data(self)
+    reset_data(self)
+    for root, dirs, _ in os.walk(self.search_path):
+        if dirs:
+            for dir in dirs:
+                self.found_folders.add(os.path.join(root, dir))
+    if self.found_folders:
+        for folder in self.found_folders:
+            partial_path = folder.removeprefix(self.search_path)
+            if partial_path.startswith(os.path.sep):
+                partial_path = partial_path[1:]
+            self.found_folders_short.add(partial_path)
+    show_data(self)
 #-----------------------------------------------------------------------
 def show_data(self,source=1):
     self.file_list.clear()
@@ -418,7 +418,7 @@ def filter_type(self):
             if any(file.lower().endswith(ext) for ext in self.search_type):
                 filtered_files.append(file)
                 dirname= os.path.dirname(file)
-                if dirname.startswith(os.path.sep):
+                if dirname.startswith(os.path.sep) and self.OS != "MAC":
                     partial_path = partial_path[1:]
                     dirname = dirname[1:]
                 filtered_folders.add(dirname)
@@ -495,93 +495,21 @@ def resizeEvent(self, event):
     super().resizeEvent(event)
 #----------------------------------------------------------------------
 def preview_file(self,path)    :
-    ext = os.path.splitext(path)[1].lower()
-    kind =[ i  for i,(k,v) in enumerate(EXTENSIONS.items()) if ext in v][0]
-    filetype = [k for k,v in VIEW_EXT.items() if kind in v][0]
     clear_preview(self)
-    if filetype == "other": 
+    ext = os.path.splitext(path)[1].lower()
+    ord_list =[ i  for i,(k,v) in enumerate(EXTENSIONS.items()) if ext in v] or [0]# Index of file in EXTENSIONS
+    if ord_list[0] == 0 :
         self.preview.setText("[Unsupported file type]")
+        return
     else:
-        if filetype == "text":
-            txt_view.main_txt(self,path,ext,kind,filetype)
-    # Check supported types
-    
-    
-    
-    # if ext.encode() in supported_ext:
+        ord = ord_list[0]
         
-    #     preview_image(self, path)
-    # elif ext in TEXT_EXT:
-    #     preview_text(self,path)
-    # elif ext == ".docx":
-    #     preview_word(self,path)
-    # elif ext == ".xlsx":
-    #     preview_excel(self,path)
-    # elif ext in CAD_EXT:
-    #     self.preview.setText("[Cannot preview CAD file]")
-    # else:
-    #     self.preview.setText("[Unsupported file type]")
-#----------------------------------------------------------------------
-def preview_image(self, filepath):
-        pixmap = QPixmap(filepath)
-        if pixmap.isNull():
-            self.preview.setText("[Cannot load image]")
-        else:
-            self.original_pixmap = pixmap   # ← store original full-quality image
-            update_scaled_image(self)
-#----------------------------------------------------------------------
-def update_scaled_image(self):
-        if self.original_pixmap is None:
-            return
-        scaled = self.original_pixmap.scaled(
-            self.preview.width(),
-            self.preview.height(),
-            Qt.KeepAspectRatio,
-            Qt.SmoothTransformation   # ← smoother resize!
-        )
-        self.preview.setPixmap(scaled)
-#----------------------------------------------------------------------
-
-def preview_text(self, filepath):
-        try:
-            with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
-                content = f.read()
-            self.preview.setText(content)
-        except:
-            self.preview.setText("[Cannot read text file]")
-#----------------------------------------------------------------------
-def preview_word(self, filepath,max_lines=10):
-        from docx import Document
-        from docx.shared import Pt
-        try:
-            doc = Document(filepath)
-            text =""
-            for paragraph in doc.paragraphs:
-                for run in paragraph.runs:
-                    text += run.text +" "
-                text +="\n"
-                if max_lines and len(text.splitlines()) >= max_lines:
-                    break
-            text = text.rstrip()  # Remove trailing newline character
-            self.preview.setText(text.rstrip() if text else "[Empty Word document]")
-            self.preview.setAlignment(Qt.AlignLeft | Qt.AlignTop)  # Set alignment to left and top
-            self.preview.setTextInteractionFlags(Qt.NoTextInteraction)  # Disable text interaction
-        except:
-            self.preview.setText("[Cannot preview Word file]")
-#----------------------------------------------------------------------
-def preview_excel(self, filepath, max_rows=10):
-        try:
-            wb = openpyxl.load_workbook(filepath, read_only=True)
-            ws = wb.active
-            text = ""
-            for i, row in enumerate(ws.iter_rows(values_only=True)):
-                text += "\t".join([str(cell) if cell is not None else "" for cell in row]) + "\n"
-                if i + 1 >= max_rows:
-                    break
-            text = text.rstrip()  # Remove trailing newline character
-            self.preview.setText(text if text else "[Empty Excel sheet]")
-            self.preview.setAlignment(Qt.AlignLeft | Qt.AlignTop)  # Set alignment to left and top
-            self.preview.setTextInteractionFlags(Qt.NoTextInteraction)  # Disable text interaction
-        except:
-            self.preview.setText("[Cannot preview Excel file]")
-# -----------------------------------------
+    filetype = [k for k,v in VIEW_EXT.items() if ord in v][0]#Type to choose Preview code 
+    
+    if filetype == "other":
+        self.preview.setText("[Unsupported file type]")
+        return
+    elif filetype == "text":
+        main_txt(self,path,ext,ord)
+    elif filetype == "media":
+        main_media(self,path,ext,ord)

@@ -11,7 +11,7 @@ from languages import *
 from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit,QApplication
 from PySide6.QtCore import Qt,QUrl
 from PySide6.QtGui import QFontMetrics,QDesktopServices,QPixmap,QImageReader 
-
+from media_view import main_media,clear_preview
 #--------------------------------------------------------------------------------------
 def PC_Info(self):
     system = platform.system()
@@ -485,16 +485,13 @@ def search_files(self,source = 1):
             show_empty(self)
     stop_all(self)
 #----------------------------------------------------------------------
-def clear_preview(self):
-    self.preview.clear()
-    self.preview.setText("")
-#---------------------------------------------------------------------
 def resizeEvent(self, event):
     if hasattr(self, "original_pixmap") and self.original_pixmap:
         self.update_scaled_image()
     super().resizeEvent(event)
 #----------------------------------------------------------------------
-def preview_file(self,path)    :
+def preview_file(self,path):
+    from media_view import clear_preview
     clear_preview(self)
     ext = os.path.splitext(path)[1].lower()
     ord_list =[ i  for i,(k,v) in enumerate(EXTENSIONS.items()) if ext in v] or [0]# Index of file in EXTENSIONS

@@ -152,7 +152,7 @@ def preview_video(self, filepath):
         self.preview.setLayout(QVBoxLayout())
 
     # Video widget
-    video_widget = QVideoWidget(self)
+    video_widget = QVideoWidget(self.preview)
     self.preview.layout().addWidget(video_widget)
 
     # Ensure bottom layout exists

@@ -211,13 +211,23 @@ class FileSearch(QWidget):
         self.cancel_button.setMaximumWidth(80)  # Won't grow beyond 80px
         layoutL.addWidget(self.cancel_button,alignment=Qt.AlignCenter)
         
-        self.preview  = QLabel("Preview Area")
-        self.preview.setStyleSheet("border: 1px solid gray;")
-        self.preview.setMinimumHeight(250)
-        self.preview.setWordWrap(True)
-        self.preview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)  # Set size policy to expand in both directions
-        self.preview.setContentsMargins(0, 0, 0, 0)  # Remove margins to allow resizing
-        self.preview.setAlignment(Qt.AlignCenter)
+        # self.preview  = QLabel("Preview Area")
+        # self.preview.setStyleSheet("border: 1px solid gray;")
+        # self.preview.setMinimumHeight(250)
+        # self.preview.setWordWrap(True)
+        # self.preview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)  # Set size policy to expand in both directions
+        # self.preview.setContentsMargins(0, 0, 0, 0)  # Remove margins to allow resizing
+        # self.preview.setAlignment(Qt.AlignCenter)
+        self.preview = QWidget()
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
+        layout.setSpacing(0)
+
+        label = QLabel("Preview Area")
+        label.setAlignment(Qt.AlignCenter)
+
+        layout.addWidget(label)
+        self.preview.setLayout(layout)
         
         # Add a second widget under preview pane (for audio/video controls later)
         self.bottom_area = QWidget()

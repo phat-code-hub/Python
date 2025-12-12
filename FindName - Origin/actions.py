@@ -11,7 +11,7 @@ from languages import *
 from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit,QApplication
 from PySide6.QtCore import Qt,QUrl
 from PySide6.QtGui import QFontMetrics,QDesktopServices,QPixmap,QImageReader 
-
+from media_view import main_media,clear_preview
 #--------------------------------------------------------------------------------------
 def PC_Info(self):
     system = platform.system()
@@ -48,13 +48,17 @@ def check_registration(self): #For UnitFrom
     # Windows
     if self.OS == "WIN":
         import winreg
-        reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,f"Software\\{self.REG_KEY}")
-        is_passed = winreg.QueryValueEx(reg_key, "Passed")
-        if is_passed[0] == "True":
-            self.LANG = winreg.QueryValueEx(reg_key, "Language")
-            self.PATH = winreg.QueryValueEx(reg_key, "SearchPath")
-            passed = True
-        winreg.CloseKey(reg_key)
+        try:
+            winreg.OpenKey(winreg.HKEY_CURRENT_USER,f"Software\\{self.REG_KEY}")
+            reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,f"Software\\{self.REG_KEY}")
+            is_passed = winreg.QueryValueEx(reg_key, "Passed")
+            if is_passed[0] == "True":
+                self.LANG = winreg.QueryValueEx(reg_key, "Language")
+                self.PATH = winreg.QueryValueEx(reg_key, "SearchPath")
+                passed = True
+                winreg.CloseKey(reg_key)   
+        except Exception as e:
+            pass
     # MAC
     elif self.OS == "MAC":
         from pathlib import Path
@@ -89,9 +93,9 @@ def toggle_password_visibility(self,state):
 def check_license(self,password):
     import re
     # if re.match(r"^0\w*",password):
-    # if ("11" in password) and ("3" in password):
     if "0" in password:
         self.close()
+        # ui_main.CheckForm().close()
         create_registry(self)
         ui_main.FileSearchHandler().show()
     else:
@@ -324,7 +328,7 @@ def show_file_info(self,current):
         #Get file name
         short_path =fm.elidedText(self.found_files[self.file_list.row(current)],Qt.ElideMiddle,600)
         self.info.setText(short_path)
-        preview_file(self,full_path,short_path)
+        preview_file(self,full_path)
     else:
         self.info.setText("")
 #-----------------------------------------------------------------------   
@@ -485,16 +489,13 @@ def search_files(self,source = 1):
             show_empty(self)
     stop_all(self)
 #----------------------------------------------------------------------
-def clear_preview(self):
-    self.preview.clear()
-    self.preview.setText("")
-#---------------------------------------------------------------------
 def resizeEvent(self, event):
     if hasattr(self, "original_pixmap") and self.original_pixmap:
         self.update_scaled_image()
     super().resizeEvent(event)
 #----------------------------------------------------------------------
-def preview_file(self,path)    :
+def preview_file(self,path):
+    from media_view import clear_preview
     clear_preview(self)
     ext = os.path.splitext(path)[1].lower()
     ord_list =[ i  for i,(k,v) in enumerate(EXTENSIONS.items()) if ext in v] or [0]# Index of file in EXTENSIONS

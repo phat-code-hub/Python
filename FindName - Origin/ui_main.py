@@ -73,7 +73,6 @@ class FileSearch(QWidget):
         move_to_center(self)
     #---------------------------------------------------------------------------
     def default_values(self):
-        self.limit_timer  = 200
         self.REG_KEY = InitInfo().REG_KEY
         self.OS = InitInfo().OS
         self.language,self.search_path = get_registry_values(self)
@@ -211,26 +210,65 @@ class FileSearch(QWidget):
         self.cancel_button.setMaximumWidth(80)  # Won't grow beyond 80px
         layoutL.addWidget(self.cancel_button,alignment=Qt.AlignCenter)
         
-        self.preview  = QLabel("Preview Area")
-        self.preview.setStyleSheet("border: 1px solid gray;")
-        self.preview.setMinimumHeight(250)
-        self.preview.setWordWrap(True)
-        self.preview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)  # Set size policy to expand in both directions
-        self.preview.setContentsMargins(0, 0, 0, 0)  # Remove margins to allow resizing
-        self.preview.setAlignment(Qt.AlignCenter)
+        # self.preview  = QLabel("Preview Area")
+        # self.preview.setStyleSheet("border: 1px solid gray;")
+        # self.preview.setMinimumHeight(250)
+        # self.preview.setWordWrap(True)
+        # self.preview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)  # Set size policy to expand in both directions
+        # self.preview.setContentsMargins(0, 0, 0, 0)  # Remove margins to allow resizing
+        # self.preview.setAlignment(Qt.AlignCenter)
+        self.preview = QWidget()
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
+        layout.setSpacing(0)
+
+        label = QLabel("Preview Area")
+        label.setAlignment(Qt.AlignCenter)
+
+        layout.addWidget(label)
+        self.preview.setLayout(layout)
         
-        layoutR.addWidget(self.preview)
+        # Add a second widget under preview pane (for audio/video controls later)
+        self.bottom_area = QWidget()
+        self.bottom_area.setMinimumHeight(120)
+        self.bottom_area.setStyleSheet("border: 1px solid lightgray; background: #fafafa;")
+    
+        # Create vertical splitter inside right pane
+        right_splitter = QSplitter(Qt.Vertical)
+        right_splitter.addWidget(self.preview)
+        right_splitter.addWidget(self.bottom_area)
+        right_splitter.setSizes([350, 150])   # default size distribution
         
+        # Put this vertical splitter into right panel layout
+        layoutR = QVBoxLayout()
+        layoutR.addWidget(right_splitter)
+        
+        # Left–right splitter (existing)
         splitter = QSplitter(Qt.Horizontal)
+
         left_panel = QWidget()
-        right_panel =QWidget()
-        
         left_panel.setLayout(layoutL)
+
+        right_panel = QWidget()
         right_panel.setLayout(layoutR)
 
         splitter.addWidget(left_panel)
         splitter.addWidget(right_panel)
         splitter.setSizes([700, 300])
+        
+        
+        # layoutR.addWidget(self.preview)
+        
+        # splitter = QSplitter(Qt.Horizontal)
+        # left_panel = QWidget()
+        # right_panel =QWidget()
+        
+        # left_panel.setLayout(layoutL)
+        # right_panel.setLayout(layoutR)
+
+        # splitter.addWidget(left_panel)
+        # splitter.addWidget(right_panel)
+        # splitter.setSizes([700, 300])
         
         main_layout = QVBoxLayout()
         main_layout.addWidget(splitter)

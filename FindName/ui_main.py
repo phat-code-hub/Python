@@ -452,9 +452,9 @@ class FileSearchHandler(FileSearch):
 
         # File list selection & double-click
         # Route selection through our handler that decides which preview to show
-        self.file_list.currentItemChanged.connect(lambda current:show_file_info(self,current))
+        # self.file_list.currentItemChanged.connect(lambda current:show_file_info(self,current))
         # self.file_list.currentItemChanged.connect(lambda current:on_file_selected(self,current))
-        # self.file_list.currentItemChanged.connect(on_file_selected(self))
+        self.file_list.currentItemChanged.connect(lambda current :on_file_selected(self,current))
         self.file_list.itemDoubleClicked.connect(lambda item: open_file_location(self, item))
 
         # Cancel / quit

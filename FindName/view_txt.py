@@ -48,7 +48,7 @@ def preview_text(self, filepath, max_chars=200000):
         self.text_view.setText("[Cannot read file]")
     self.preview_top.setCurrentWidget(self.text_view)
 
-def preview_word(self, self_obj, filepath, max_lines=200):
+def preview_word(self, filepath, max_lines=200):
     try:
         if filepath.lower().endswith(".docx"):
             from docx import Document
@@ -88,8 +88,10 @@ def preview_excel(self, filepath, max_rows=10):
             if i + 1 >= max_rows:
                 break
         text = text.rstrip()  # Remove trailing newline character
-        self.preview.setText(text if text else "[Empty Excel sheet]")
-        self.preview.setAlignment(Qt.AlignLeft | Qt.AlignTop)  # Set alignment to left and top
-        self.preview.setTextInteractionFlags(Qt.NoTextInteraction)  # Disable text interaction
+        self.text_view.setText(text if text else "[Empty Excel sheet]")
+        self.text_view.setAlignment(Qt.AlignLeft | Qt.AlignTop)  # Set alignment to left and top
+        self.text_view.setTextInteractionFlags(Qt.NoTextInteraction)  # Disable text interaction
+        self.preview_top.setCurrentWidget(self.text_view)
     except:
-        self.preview.setText("[Cannot preview Excel file]")
+        self.text_view.setText("[Cannot preview Excel file]")
+        self.preview_top.setCurrentWidget(self.text_view)

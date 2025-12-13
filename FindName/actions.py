@@ -316,38 +316,45 @@ def change_logic(self):
     search_files(self)
 #----------------------------------------------------------------
 
-def on_file_selected(self, current, previous=None):
-        self.info.setTextInteractionFlags(self.info.textInteractionFlags() | Qt.TextSelectableByMouse)
-        fm = QFontMetrics(self.info.font())
-        """Routing: decide how to preview a selected file and whether to show media controls."""
-        try:
-            if current is None:
-                return
-            file_index = self.file_list.currentRow()
-            # get absolute path from item data if present
-            filepath = current.data(Qt.UserRole) or current.text()
-            if not filepath:
-                filepath = current.text()
-            # try to resolve relative path against search_path
-            if not os.path.isabs(filepath) and getattr(self, "search_path", None):
-                candidate = os.path.join(self.search_path, filepath)
-                if os.path.exists(candidate):
-                    filepath = candidate
+# def on_file_selected(self, current, previous=None):
+        # self.info.setTextInteractionFlags(self.info.textInteractionFlags() | Qt.TextSelectableByMouse)
+        # fm = QFontMetrics(self.info.font())
+        # """Routing: decide how to preview a selected file and whether to show media controls."""
+        # try:
+        #     if current is None:
+        #         return
+        #     file_index = self.file_list.currentRow()
+        #     # get absolute path from item data if present
+        #     filename = current.data(Qt.UserRole) or current.text()
+        #     if not filename:
+        #         filename = current.text()
+        #     file_path = os.path.dirname(self.found_files[file_index]).lower()
+        #     file_path = file_path.removeprefix(self.search_path).removeprefix(os.path.sep)
+        #     foundFolders =[i.text().lower() for i in self.folder_list.findItems("",Qt.MatchContains)]
+        #     index = list(filter(lambda i:foundFolders[i] in file_path,range(len(foundFolders))))
+        #     if index:
+        #         self.folder_list.setCurrentRow(index[0])
+                    
+            # # try to resolve relative path against search_path
+            # if not os.path.isabs(filename) and getattr(self, "search_path", None):
+            #     candidate = os.path.join(self.search_path, filepath)
+            #     if os.path.exists(candidate):
+            #         filepath = candidate
 
-            if not os.path.exists(filepath):
-                self.text_view.setText("[File not found]")
-                self.preview_top.setCurrentWidget(self.text_view)
-                self.preview_bottom.setVisible(False)
-                return
+            # if not os.path.exists(filepath):
+            #     self.text_view.setText("[File not found]")
+            #     self.preview_top.setCurrentWidget(self.text_view)
+            #     self.preview_bottom.setVisible(False)
+            #     return
             #Get selected file folder path
-            file_path = file_path.removeprefix(self.search_path).removeprefix(os.path.sep)
-            foundFolders =[i.text().lower() for i in self.folder_list.findItems("",Qt.MatchContains)]
-            index = list(filter(lambda i:foundFolders[i] in file_path,range(len(foundFolders))))
-            if index:
-                self.folder_list.setCurrentRow(index[0])
+            # file_path = file_path.removeprefix(self.search_path).removeprefix(os.path.sep)
+            # foundFolders =[i.text().lower() for i in self.folder_list.findItems("",Qt.MatchContains)]
+            # index = list(filter(lambda i:foundFolders[i] in file_path,range(len(foundFolders))))
+            # if index:
+            #     self.folder_list.setCurrentRow(index[0])
             
-            print(filepath)
-            fpath, ext = os.path.splitext(filepath)
+            # print(filepath)
+            # fpath, ext = os.path.splitext(file_path)
             # ext = ext.lower()
             # print(fpath,ext)
 
@@ -394,20 +401,26 @@ def on_file_selected(self, current, previous=None):
         #     self.preview_top.setCurrentWidget(self.text_view)
         #     self.preview_bottom.setVisible(False)
 
-        except Exception as e:
-            print("Preview routing error:", e)
-            self.text_view.setText("[Preview error]")
-            self.preview_top.setCurrentWidget(self.text_view)
-            self.preview_bottom.setVisible(False)
+        # except Exception as e:
+        #     print("Preview routing error:", e)
+        #     self.text_view.setText("[Preview error]")
+        #     self.preview_top.setCurrentWidget(self.text_view)
+        #     self.preview_bottom.setVisible(False)
 
 #----------------------------------------------------------------
 def show_file_info(self,current):
     self.info.setTextInteractionFlags(self.info.textInteractionFlags() | Qt.TextSelectableByMouse)
     fm = QFontMetrics(self.info.font())
-    if current:
-        # file_index = self.file_list.currentRow()
+    try:
+        if current is None:
+            self.info.setText("")
+            return
+        file_index = self.file_list.currentRow()
+        filename = current.data(Qt.UserRole) or current.text()
+        if not filename:
+            filename = current.text()
         #Get file full path
-        # file_path = os.path.dirname(self.found_files[file_index]).lower()
+        file_path = os.path.dirname(self.found_files[file_index]).lower()
         file_path = file_path.removeprefix(self.search_path).removeprefix(os.path.sep)
         foundFolders =[i.text().lower() for i in self.folder_list.findItems("",Qt.MatchContains)]
         index = list(filter(lambda i:foundFolders[i] in file_path,range(len(foundFolders))))
@@ -415,11 +428,14 @@ def show_file_info(self,current):
             self.folder_list.setCurrentRow(index[0])
         full_path =self.found_files[self.file_list.row(current)]
         #Get file name
-        short_path =fm.elidedText(self.found_files[self.file_list.row(current)],Qt.ElideMiddle,600)
+        short_path =fm.elidedText(self.found_files[self.file_list.row(current)],Qt.ElideMiddle,500)
         self.info.setText(short_path)
         preview_file(self,full_path)
-    else:
-        self.info.setText("")
+    except Exception as e:
+            print("Preview routing error:", e)
+            self.text_view.setText("[Preview error]")
+            self.preview_top.setCurrentWidget(self.text_view)
+            self.preview_bottom.setVisible(False)
 #-----------------------------------------------------------------------   
 def open_file_location(self,item):
     import subprocess

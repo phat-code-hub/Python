@@ -106,8 +106,12 @@ class FileSearch(QWidget):
         self.type = TYPES
         self.ext_type = EXTENSIONS
         self.logics = LOGICS
-        self.readable_text_ext = TEXT_EXT
-        self.readable_cad_ext =CAD_EXT
+        #---------------------------------
+        # Classify previewable extensions
+        #---------------------------------
+        self.filetype = VIEW_EXT
+        # self.readable_text_ext = TEXT_EXT
+        # self.readable_cad_ext =CAD_EXT
         self.init =True
     # def _default_values_placeholder(self):
         """
@@ -452,9 +456,9 @@ class FileSearchHandler(FileSearch):
 
         # File list selection & double-click
         # Route selection through our handler that decides which preview to show
-        # self.file_list.currentItemChanged.connect(lambda current:show_file_info(self,current))
+        self.file_list.currentItemChanged.connect(lambda current:show_file_info(self,current))
         # self.file_list.currentItemChanged.connect(lambda current:on_file_selected(self,current))
-        self.file_list.currentItemChanged.connect(lambda current :on_file_selected(self,current))
+        # self.file_list.currentItemChanged.connect(lambda current :on_file_selected(self,current))
         self.file_list.itemDoubleClicked.connect(lambda item: open_file_location(self, item))
 
         # Cancel / quit
@@ -472,80 +476,80 @@ class FileSearchHandler(FileSearch):
         super().closeEvent(event)  # Call the default close event handler event.accept()  # Allow the window to close
 
     # -- preview & search routing -----------------------
-    def _on_file_selected(self, current, previous=None):
-        """Routing: decide how to preview a selected file and whether to show media controls."""
-        try:
-            if current is None:
-                return
+    # def _on_file_selected(self, current, previous=None):
+    #     """Routing: decide how to preview a selected file and whether to show media controls."""
+    #     try:
+    #         if current is None:
+    #             return
 
-            # get absolute path from item data if present
-            filepath = current.data(Qt.UserRole) or current.text()
-            if not filepath:
-                filepath = current.text()
+    #         # get absolute path from item data if present
+    #         filepath = current.data(Qt.UserRole) or current.text()
+    #         if not filepath:
+    #             filepath = current.text()
 
-            # try to resolve relative path against search_path
-            if not os.path.isabs(filepath) and getattr(self, "search_path", None):
-                candidate = os.path.join(self.search_path, filepath)
-                if os.path.exists(candidate):
-                    filepath = candidate
+    #         # try to resolve relative path against search_path
+    #         if not os.path.isabs(filepath) and getattr(self, "search_path", None):
+    #             candidate = os.path.join(self.search_path, filepath)
+    #             if os.path.exists(candidate):
+    #                 filepath = candidate
 
-            if not os.path.exists(filepath):
-                self.text_view.setText("[File not found]")
-                self.preview_top.setCurrentWidget(self.text_view)
-                self.preview_bottom.setVisible(False)
-                return
+    #         if not os.path.exists(filepath):
+    #             self.text_view.setText("[File not found]")
+    #             self.preview_top.setCurrentWidget(self.text_view)
+    #             self.preview_bottom.setVisible(False)
+    #             return
 
-            _, ext = os.path.splitext(filepath)
-            ext = ext.lower()
+    #         _, ext = os.path.splitext(filepath)
+    #         ext = ext.lower()
 
-            # Media: audio/video -> thumbnail top + enable bottom controls
-            if ext in getattr(self, "audio_exts", set()) or ext in getattr(self, "video_exts", set()):
-                media_view.show_media_thumbnail(self, filepath)
-                media_view.prepare_media_player(self, filepath)
-                # media_view.prepare_media_player will show preview_bottom
-                return
+    #         # Media: audio/video -> thumbnail top + enable bottom controls
+    #         if ext in getattr(self, "audio_exts", set()) or ext in getattr(self, "video_exts", set()):
+    #             media_view.show_media_thumbnail(self, filepath)
+    #             media_view.prepare_media_player(self, filepath)
+    #             # media_view.prepare_media_player will show preview_bottom
+    #             return
 
-            # Text/document/images handled by txt_view functions
-            if ext in getattr(self, "readable_text_ext", set()) or ext in (".txt", ".md", ".py", ".log", ".json"):
-                txt_view.preview_text_file(self, filepath)
-                self.preview_bottom.setVisible(False)
-                return
+    #         # Text/document/images handled by txt_view functions
+    #         if ext in getattr(self, "readable_text_ext", set()) or ext in (".txt", ".md", ".py", ".log", ".json"):
+    #             txt_view.preview_text_file(self, filepath)
+    #             self.preview_bottom.setVisible(False)
+    #             return
 
-            # images (use QImageReader supported formats)
-            try:
-                from PySide6.QtGui import QImageReader
-                supported_exts = {("." + bytes(fmt).decode()).lower() for fmt in QImageReader.supportedImageFormats()}
-            except Exception:
-                supported_exts = {".png", ".jpg", ".jpeg", ".bmp", ".gif"}
+    #         # images (use QImageReader supported formats)
+    #         try:
+    #             from PySide6.QtGui import QImageReader
+    #             supported_exts = {("." + bytes(fmt).decode()).lower() for fmt in QImageReader.supportedImageFormats()}
+    #         except Exception:
+    #             supported_exts = {".png", ".jpg", ".jpeg", ".bmp", ".gif"}
 
-            if ext in supported_exts:
-                txt_view.preview_image_file(self, filepath)
-                self.preview_bottom.setVisible(False)
-                return
+    #         if ext in supported_exts:
+    #             txt_view.preview_image_file(self, filepath)
+    #             self.preview_bottom.setVisible(False)
+    #             return
 
-            # docx / xlsx
-            if ext == ".docx" or ext == ".xlsx":
-                txt_view.preview_document_file(self, filepath)
-                self.preview_bottom.setVisible(False)
-                return
+    #         # docx / xlsx
+    #         if ext == ".docx" or ext == ".xlsx":
+    #             txt_view.preview_document_file(self, filepath)
+    #             self.preview_bottom.setVisible(False)
+    #             return
 
-            # CAD placeholder
-            if ext in getattr(self, "readable_cad_ext", set()):
-                self.cad_view.setText(f"CAD preview not available for {os.path.basename(filepath)}")
-                self.preview_top.setCurrentWidget(self.cad_view)
-                self.preview_bottom.setVisible(False)
-                return
+    #         # CAD placeholder
+    #         if ext in getattr(self, "readable_cad_ext", set()):
+    #             self.cad_view.setText(f"CAD preview not available for {os.path.basename(filepath)}")
+    #             self.preview_top.setCurrentWidget(self.cad_view)
+    #             self.preview_bottom.setVisible(False)
+    #             return
 
-            # fallback
-            self.text_view.setText("[Unsupported file type]")
-            self.preview_top.setCurrentWidget(self.text_view)
-            self.preview_bottom.setVisible(False)
+    #         # fallback
+    #         self.text_view.setText("[Unsupported file type]")
+    #         self.preview_top.setCurrentWidget(self.text_view)
+    #         self.preview_bottom.setVisible(False)
 
-        except Exception as e:
-            print("Preview routing error:", e)
-            self.text_view.setText("[Preview error]")
-            self.preview_top.setCurrentWidget(self.text_view)
-            self.preview_bottom.setVisible(False)
+    #     except Exception as e:
+    #         print("Preview routing error:", e)
+    #         self.text_view.setText("[Preview error]")
+    #         self.preview_top.setCurrentWidget(self.text_view)
+    #         self.preview_bottom.setVisible(False)
 
     # -- media player helpers ----------------------------
     def _on_play_clicked(self):

@@ -8,6 +8,7 @@ import openpyxl
 #----------------------------------------------------------------------
 def main_text(self, filepath,ext,ord):
     supported_ext = [b"." + fmt for fmt in QImageReader.supportedImageFormats()]
+    #Supported_ext includes : images , plaintext, Excel .xlxs, Word .docx
     if ext.encode() in supported_ext:
         preview_image(self, filepath)
     elif ext in languages.TEXT_EXT:
@@ -17,8 +18,8 @@ def main_text(self, filepath,ext,ord):
     elif ext == ".xlsx":
         preview_excel(self,filepath)
     else:
-        self.preview.setText("[Unsupported file type]")
-    pass
+        self.text_view.setText("[Unsupported file type]")
+        self.preview_top.setCurrentWidget(self.text_view)
 #----------------------------------------------------------------------
 def preview_image(self, filepath):
     pixmap = QPixmap(filepath)
@@ -62,36 +63,26 @@ def preview_word(self, filepath, max_lines=200):
             self.text_view.setText(text if text.strip() else "[Empty Word document]")
             self.preview_top.setCurrentWidget(self.text_view)
             return
-        if filepath.lower().endswith(".xlsx"):
-            wb = openpyxl.load_workbook(filepath, read_only=True)
-            ws = wb.active
-            rows = []
-            for i, row in enumerate(ws.iter_rows(values_only=True)):
-                rows.append("\t".join([str(cell) if cell is not None else "" for cell in row]))
-                if i + 1 >= 50:
-                    rows.append("... [Truncated]")
-                    break
-            self.text_view.setText("\n".join(rows) if rows else "[Empty Excel sheet]")
-            self.preview_top.setCurrentWidget(self.text_view)
-            return
     except Exception as e:
-        print("Document preview error:", e)
+        # print("Document preview error:", e)
         self.text_view.setText("[Cannot preview document]")
         self.preview_top.setCurrentWidget(self.text_view)
+        return
 def preview_excel(self, filepath, max_rows=10):
     try:
         wb = openpyxl.load_workbook(filepath, read_only=True)
         ws = wb.active
-        text = ""
+        rows = []
         for i, row in enumerate(ws.iter_rows(values_only=True)):
-            text += "\t".join([str(cell) if cell is not None else "" for cell in row]) + "\n"
+            rows.append("\t".join([str(cell) if cell is not None else "" for cell in row]))
             if i + 1 >= max_rows:
+                rows.append("... [Truncated]")
                 break
-        text = text.rstrip()  # Remove trailing newline character
-        self.text_view.setText(text if text else "[Empty Excel sheet]")
+        self.text_view.setText("\n".join(rows) if rows else "[Empty Excel sheet]")
         self.text_view.setAlignment(Qt.AlignLeft | Qt.AlignTop)  # Set alignment to left and top
         self.text_view.setTextInteractionFlags(Qt.NoTextInteraction)  # Disable text interaction
-        self.preview_top.setCurrentWidget(self.text_view)
     except:
         self.text_view.setText("[Cannot preview Excel file]")
         self.preview_top.setCurrentWidget(self.text_view)
+    self.preview_top.setCurrentWidget(self.text_view)
+    return

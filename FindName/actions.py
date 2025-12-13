@@ -582,15 +582,10 @@ def resizeEvent(self, event):
     super().resizeEvent(event)
 #----------------------------------------------------------------------
 def preview_file(self,path):
-    # from media_view import clear_preview
-    # clear_preview(self) # type: ignore
-    # 
     ext = os.path.splitext(path)[1].lower()
     # ord_list =[ i  for i,(k,v) in enumerate(EXTENSIONS.items()) if ext in v] or [0]# Index of file in EXTENSIONS
     ord_list =[ i  for i,(k,v) in enumerate(self.ext_type.items()) if ext in v] or [0]# Index of file in EXTENSIONS
     if ord_list[0] == 0 :
-        # unsupported
-        # ensure preview has layout (clear_preview created default label already)
         # self.preview.setText("[Unsupported file type]")
         clear_layout = None  # placeholder; top already set by clear_preview
         return

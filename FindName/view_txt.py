@@ -8,14 +8,14 @@ import openpyxl
 #----------------------------------------------------------------------
 def main_text(self, filepath,ext,ord):
     supported_ext = [b"." + fmt for fmt in QImageReader.supportedImageFormats()]
-    #Supported_ext includes : images , plaintext, Excel .xlxs, Word .docx
-    if ext.encode() in supported_ext:
+    #Supported_ext includes : images , plaintext, Excel .xlsx, Word .docx
+    if ext.encode() in supported_ext: # Image files
         preview_image(self, filepath)
-    elif ext in languages.TEXT_EXT:
+    elif ord == 9: # Plain text
         preview_text(self,filepath)
-    elif ext == ".docx":
+    elif ext in [".docx",".doc"]:
         preview_word(self,filepath)
-    elif ext == ".xlsx":
+    elif ext in [ ".xlsx" ,".xls"]:
         preview_excel(self,filepath)
     else:
         self.text_view.setText("[Unsupported file type]")
@@ -35,7 +35,9 @@ def preview_image(self, filepath):
     )
     self.image_view.setPixmap(scaled)
     self.preview_top.setCurrentWidget(self.image_view)
+    return
 
+#----------------------------------------------------------------------
 def preview_text(self, filepath, max_chars=200000):
     try:
         with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
@@ -45,29 +47,27 @@ def preview_text(self, filepath, max_chars=200000):
             else:
                 self.text_view.setText(content)
     except Exception as e:
-        print("Text preview error:", e)
-        self.text_view.setText("[Cannot read file]")
+        self.text_view.setText("[Cannot read plain text file]")
     self.preview_top.setCurrentWidget(self.text_view)
-
+    return
+#----------------------------------------------------------------------
 def preview_word(self, filepath, max_lines=200):
+    from docx import Document
     try:
-        if filepath.lower().endswith(".docx"):
-            from docx import Document
-            doc = Document(filepath)
-            text = []
-            for paragraph in doc.paragraphs:
-                text.append(paragraph.text)
-                if len(text) >= max_lines:
-                    break
-            text = "\n".join(text)
-            self.text_view.setText(text if text.strip() else "[Empty Word document]")
-            self.preview_top.setCurrentWidget(self.text_view)
-            return
+        doc = Document(filepath)
+        text = []
+        for paragraph in doc.paragraphs:
+            text.append(paragraph.text)
+            if len(text) >= max_lines:
+                text.append("... [Truncated]")
+                break
+        text = "\n".join(text)
+        self.text_view.setText(text if text.strip() else "[Empty Word document]")
     except Exception as e:
-        # print("Document preview error:", e)
         self.text_view.setText("[Cannot preview document]")
-        self.preview_top.setCurrentWidget(self.text_view)
-        return
+    self.preview_top.setCurrentWidget(self.text_view)
+    return
+#----------------------------------------------------------------------
 def preview_excel(self, filepath, max_rows=10):
     try:
         wb = openpyxl.load_workbook(filepath, read_only=True)
@@ -83,6 +83,5 @@ def preview_excel(self, filepath, max_rows=10):
         self.text_view.setTextInteractionFlags(Qt.NoTextInteraction)  # Disable text interaction
     except:
         self.text_view.setText("[Cannot preview Excel file]")
-        self.preview_top.setCurrentWidget(self.text_view)
     self.preview_top.setCurrentWidget(self.text_view)
     return

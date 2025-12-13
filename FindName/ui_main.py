@@ -10,7 +10,7 @@ from PySide6.QtMultimediaWidgets import QVideoWidget
 # Your project modules (must exist)
 from actions import *
 from languages import *
-import txt_view
+import view_txt
 import media_view
 
 # ---------------------------

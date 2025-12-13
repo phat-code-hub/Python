@@ -6,8 +6,8 @@ import platform
 import ui_main
 import locale
 import media_view
-import txt_view
-# from txt_view import *
+from view_txt  import *
+
 # from media_view import *
 from languages import *
 from PySide6.QtWidgets import (QLabel,QWidget,QVBoxLayout,QListWidgetItem,
@@ -586,7 +586,8 @@ def preview_file(self,path):
     # clear_preview(self) # type: ignore
     # 
     ext = os.path.splitext(path)[1].lower()
-    ord_list =[ i  for i,(k,v) in enumerate(EXTENSIONS.items()) if ext in v] or [0]# Index of file in EXTENSIONS
+    # ord_list =[ i  for i,(k,v) in enumerate(EXTENSIONS.items()) if ext in v] or [0]# Index of file in EXTENSIONS
+    ord_list =[ i  for i,(k,v) in enumerate(self.ext_type.items()) if ext in v] or [0]# Index of file in EXTENSIONS
     if ord_list[0] == 0 :
         # unsupported
         # ensure preview has layout (clear_preview created default label already)
@@ -595,56 +596,63 @@ def preview_file(self,path):
         return
     else:
         ord = ord_list[0]
+    # filetype = [k for k,v in VIEW_EXT.items() if ord in v][0]#Type to choose Preview code 
+    filetype = [k.lower() for k,v in self.filetype.items() if ord in v][0]#Type to choose Preview code 
+    # print(ext,filetype,ord)
+    if filetype == "text": #Include image types
+        main_text(self,path,ext,ord) # type: ignore
+        return
+    # if filetype == "cad":
+    #     main_txt(self,path,ext,ord) # type: ignore
+    #     return
+    # if filetype == "prog":
+    #     main_txt(self,path,ext,ord) # type: ignore
+    #     return
+    # elif filetype == "media":
+    #     main_media(self,path,ext,ord) # type: ignore
+    #     return
+    # else:
+    #     self.preview.setText("[Unsupported file type]")
+    #     return
         
-    filetype = [k for k,v in VIEW_EXT.items() if ord in v][0]#Type to choose Preview code 
-    
-    if filetype == "other":
-        self.preview.setText("[Unsupported file type]")
-        return
-    elif filetype == "text":
-        main_txt(self,path,ext,ord) # type: ignore
-        return
-    elif filetype == "media":
-        main_media(self,path,ext,ord) # type: ignore
-        return
     # IMAGE
-    if filetype == "image":
-        # Ensure preview has a layout
-        if self.preview.layout() is None:
-            self.preview.setLayout(QVBoxLayout())
+    # if filetype == "image":
+    #     # Ensure preview has a layout
+    #     if self.preview.layout() is None:
+    #         self.preview.setLayout(QVBoxLayout())
 
-        # Clear any previous top widgets
-        # (clear_preview already cleaned everything, but keep safe)
-        for child in self.preview.findChildren(QWidget):
-            child.setParent(None)
+    #     # Clear any previous top widgets
+    #     # (clear_preview already cleaned everything, but keep safe)
+    #     for child in self.preview.findChildren(QWidget):
+    #         child.setParent(None)
 
-        # Create a QLabel inside preview to show the image and store original pixmap
-        img_label = QLabel(self.preview)
-        img_label.setAlignment(Qt.AlignCenter)
-        img_label.setContentsMargins(0, 0, 0, 0)
-        img_label.setSizePolicy(img_label.sizePolicy().Expanding, img_label.sizePolicy().Expanding)
+    #     # Create a QLabel inside preview to show the image and store original pixmap
+    #     img_label = QLabel(self.preview)
+    #     img_label.setAlignment(Qt.AlignCenter)
+    #     img_label.setContentsMargins(0, 0, 0, 0)
+    #     img_label.setSizePolicy(img_label.sizePolicy().Expanding, img_label.sizePolicy().Expanding)
 
-        # load image
-        reader = QImageReader(path)
-        qimg = reader.read()
-        if qimg.isNull():
-            # fallback to unsupported text
-            self.preview.layout().addWidget(QLabel("[Cannot display image]"))
-            return
+    #     # load image
+    #     reader = QImageReader(path)
+    #     qimg = reader.read()
+    #     if qimg.isNull():
+    #         # fallback to unsupported text
+    #         self.preview.layout().addWidget(QLabel("[Cannot display image]"))
+    #         return
 
-        pixmap = QPixmap.fromImage(qimg)
-        self.original_pixmap = pixmap  # for resizeEvent handling
+    #     pixmap = QPixmap.fromImage(qimg)
+    #     self.original_pixmap = pixmap  # for resizeEvent handling
 
-        # scale to available size
-        w = max(1, self.preview.width() - 10)
-        h = max(1, self.preview.height() - 10)
-        scaled = pixmap.scaled(w, h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        # img_label.setPixmap(scaled)
-        self.preview.setPixmap(scaled)
+    #     # scale to available size
+    #     w = max(1, self.preview.width() - 10)
+    #     h = max(1, self.preview.height() - 10)
+    #     scaled = pixmap.scaled(w, h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    #     # img_label.setPixmap(scaled)
+    #     self.preview.setPixmap(scaled)
         
-        self.preview.layout().addWidget(img_label)
-        return
-
+    #     self.preview.layout().addWidget(img_label)
+    #     return
+    
     # OTHER / UNSUPPORTED
     # Leave default preview area (clear_preview put default label)
     return

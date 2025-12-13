@@ -1,10 +1,26 @@
 # txt_view.py
 import os
-from PySide6.QtGui import QPixmap
+import languages
+from PySide6.QtGui import QPixmap,QImageReader
 from PySide6.QtCore import Qt
 import openpyxl
 
-def preview_image_file(self, filepath):
+#----------------------------------------------------------------------
+def main_text(self, filepath,ext,ord):
+    supported_ext = [b"." + fmt for fmt in QImageReader.supportedImageFormats()]
+    if ext.encode() in supported_ext:
+        preview_image(self, filepath)
+    elif ext in languages.TEXT_EXT:
+        preview_text(self,filepath)
+    elif ext == ".docx":
+        preview_word(self,filepath)
+    elif ext == ".xlsx":
+        preview_excel(self,filepath)
+    else:
+        self.preview.setText("[Unsupported file type]")
+    pass
+#----------------------------------------------------------------------
+def preview_image(self, filepath):
     pixmap = QPixmap(filepath)
     if pixmap.isNull():
         self.image_view.setText("[Cannot load image]")
@@ -19,7 +35,7 @@ def preview_image_file(self, filepath):
     self.image_view.setPixmap(scaled)
     self.preview_top.setCurrentWidget(self.image_view)
 
-def preview_text_file(self, filepath, max_chars=200000):
+def preview_text(self, filepath, max_chars=200000):
     try:
         with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
             content = f.read(max_chars)
@@ -32,7 +48,7 @@ def preview_text_file(self, filepath, max_chars=200000):
         self.text_view.setText("[Cannot read file]")
     self.preview_top.setCurrentWidget(self.text_view)
 
-def preview_document_file(self, self_obj, filepath, max_lines=200):
+def preview_word(self, self_obj, filepath, max_lines=200):
     try:
         if filepath.lower().endswith(".docx"):
             from docx import Document
@@ -62,3 +78,18 @@ def preview_document_file(self, self_obj, filepath, max_lines=200):
         print("Document preview error:", e)
         self.text_view.setText("[Cannot preview document]")
         self.preview_top.setCurrentWidget(self.text_view)
+def preview_excel(self, filepath, max_rows=10):
+    try:
+        wb = openpyxl.load_workbook(filepath, read_only=True)
+        ws = wb.active
+        text = ""
+        for i, row in enumerate(ws.iter_rows(values_only=True)):
+            text += "\t".join([str(cell) if cell is not None else "" for cell in row]) + "\n"
+            if i + 1 >= max_rows:
+                break
+        text = text.rstrip()  # Remove trailing newline character
+        self.preview.setText(text if text else "[Empty Excel sheet]")
+        self.preview.setAlignment(Qt.AlignLeft | Qt.AlignTop)  # Set alignment to left and top
+        self.preview.setTextInteractionFlags(Qt.NoTextInteraction)  # Disable text interaction
+    except:
+        self.preview.setText("[Cannot preview Excel file]")

@@ -173,16 +173,6 @@ EXTENSIONS ={
     11: [".py", ".java", ".js", ".c",".cpp",".php", ".rb", ".html", ".htm", ".css", ".cs",".frx","frm","bas","cls","vba"],
     12: [".exe", ".msi", ".bat", ".cmd",".pkg",".sh", ".app", ".jar",  ".pyw", ".pyc"],
     }
-TEXT_EXT = [
-        ".txt",
-        ".ini",
-        ".md",
-        ".csv",
-        ".yml",
-        ".yaml",
-        ".log",
-        ".json"
-    ]
 VIEW_EXT = {
     "text":[3,4,6,8,9],
     "cad" :[1,2,5],

@@ -5,13 +5,17 @@ import openpyxl
 import platform
 import ui_main
 import locale
-from txt_view import main_txt
-from media_view import main_media
+import media_view
+from view_txt  import *
+
+# from media_view import *
 from languages import *
-from PySide6.QtWidgets import QMessageBox,QFileDialog,QLineEdit,QApplication
+from PySide6.QtWidgets import (QLabel,QWidget,QVBoxLayout,QListWidgetItem,
+                                QMessageBox,QFileDialog,
+                                QLineEdit,QApplication)
 from PySide6.QtCore import Qt,QUrl
 from PySide6.QtGui import QFontMetrics,QDesktopServices,QPixmap,QImageReader 
-from media_view import main_media,clear_preview
+# from media_view import main_media,clear_preview
 #--------------------------------------------------------------------------------------
 def PC_Info(self):
     system = platform.system()
@@ -289,19 +293,18 @@ def change_search_source(self,source =1):
             self.init = False
         if not self.init:
             self.info.setText(self.label[self.language]["message"])
-        # start_process(self)
         search_files(self,source = source)
     else:
         if not self.init:
             show_empty(self)
 #----------------------------------------------------------------
 def change_type(self):
-        if self.file_type_combo.currentIndex() == -1:
-            self.type_index =0
-        else:
-            self.type_index =self.file_type_combo.currentIndex()
-        self.search_type =self.ext_type[self.type_index]
-        search_files(self)
+    if self.file_type_combo.currentIndex() == -1:
+        self.type_index =0
+    else:
+        self.type_index =self.file_type_combo.currentIndex()
+    self.search_type =self.ext_type[self.type_index]
+    search_files(self)
 #----------------------------------------------------------------
 def change_logic(self):
     if self.and_radio.isChecked():
@@ -312,11 +315,110 @@ def change_logic(self):
         self.logic_index = self.logics["NOT"]
     search_files(self)
 #----------------------------------------------------------------
+
+# def on_file_selected(self, current, previous=None):
+        # self.info.setTextInteractionFlags(self.info.textInteractionFlags() | Qt.TextSelectableByMouse)
+        # fm = QFontMetrics(self.info.font())
+        # """Routing: decide how to preview a selected file and whether to show media controls."""
+        # try:
+        #     if current is None:
+        #         return
+        #     file_index = self.file_list.currentRow()
+        #     # get absolute path from item data if present
+        #     filename = current.data(Qt.UserRole) or current.text()
+        #     if not filename:
+        #         filename = current.text()
+        #     file_path = os.path.dirname(self.found_files[file_index]).lower()
+        #     file_path = file_path.removeprefix(self.search_path).removeprefix(os.path.sep)
+        #     foundFolders =[i.text().lower() for i in self.folder_list.findItems("",Qt.MatchContains)]
+        #     index = list(filter(lambda i:foundFolders[i] in file_path,range(len(foundFolders))))
+        #     if index:
+        #         self.folder_list.setCurrentRow(index[0])
+                    
+            # # try to resolve relative path against search_path
+            # if not os.path.isabs(filename) and getattr(self, "search_path", None):
+            #     candidate = os.path.join(self.search_path, filepath)
+            #     if os.path.exists(candidate):
+            #         filepath = candidate
+
+            # if not os.path.exists(filepath):
+            #     self.text_view.setText("[File not found]")
+            #     self.preview_top.setCurrentWidget(self.text_view)
+            #     self.preview_bottom.setVisible(False)
+            #     return
+            #Get selected file folder path
+            # file_path = file_path.removeprefix(self.search_path).removeprefix(os.path.sep)
+            # foundFolders =[i.text().lower() for i in self.folder_list.findItems("",Qt.MatchContains)]
+            # index = list(filter(lambda i:foundFolders[i] in file_path,range(len(foundFolders))))
+            # if index:
+            #     self.folder_list.setCurrentRow(index[0])
+            
+            # print(filepath)
+            # fpath, ext = os.path.splitext(file_path)
+            # ext = ext.lower()
+            # print(fpath,ext)
+
+            # Media: audio/video -> thumbnail top + enable bottom controls
+        #     if ext in getattr(self, "audio_exts", set()) or ext in getattr(self, "video_exts", set()):
+        #         media_view.show_media_thumbnail(self, filepath)
+        #         media_view.prepare_media_player(self, filepath)
+        #         # media_view.prepare_media_player will show preview_bottom
+        #         return
+
+        #     # Text/document/images handled by txt_view functions
+        #     if ext in getattr(self, "readable_text_ext", set()) or ext in (".txt", ".md", ".py", ".log", ".json"):
+        #         txt_view.preview_text_file(self, filepath)
+        #         self.preview_bottom.setVisible(False)
+        #         return
+
+        #     # images (use QImageReader supported formats)
+        #     try:
+        #         from PySide6.QtGui import QImageReader
+        #         supported_exts = {("." + bytes(fmt).decode()).lower() for fmt in QImageReader.supportedImageFormats()}
+        #     except Exception:
+        #         supported_exts = {".png", ".jpg", ".jpeg", ".bmp", ".gif"}
+
+        #     if ext in supported_exts:
+        #         txt_view.preview_image_file(self, filepath)
+        #         self.preview_bottom.setVisible(False)
+        #         return
+
+        #     # docx / xlsx
+        #     if ext == ".docx" or ext == ".xlsx":
+        #         txt_view.preview_document_file(self, filepath)
+        #         self.preview_bottom.setVisible(False)
+        #         return
+
+        #     # CAD placeholder
+        #     if ext in getattr(self, "readable_cad_ext", set()):
+        #         self.cad_view.setText(f"CAD preview not available for {os.path.basename(filepath)}")
+        #         self.preview_top.setCurrentWidget(self.cad_view)
+        #         self.preview_bottom.setVisible(False)
+        #         return
+
+        #     # fallback
+        #     self.text_view.setText("[Unsupported file type]")
+        #     self.preview_top.setCurrentWidget(self.text_view)
+        #     self.preview_bottom.setVisible(False)
+
+        # except Exception as e:
+        #     print("Preview routing error:", e)
+        #     self.text_view.setText("[Preview error]")
+        #     self.preview_top.setCurrentWidget(self.text_view)
+        #     self.preview_bottom.setVisible(False)
+
+#----------------------------------------------------------------
 def show_file_info(self,current):
     self.info.setTextInteractionFlags(self.info.textInteractionFlags() | Qt.TextSelectableByMouse)
     fm = QFontMetrics(self.info.font())
-    if current:
+    try:
+        if current is None:
+            self.info.setText("")
+            return
         file_index = self.file_list.currentRow()
+        filename = current.data(Qt.UserRole) or current.text()
+        if not filename:
+            filename = current.text()
         #Get file full path
         file_path = os.path.dirname(self.found_files[file_index]).lower()
         file_path = file_path.removeprefix(self.search_path).removeprefix(os.path.sep)
@@ -326,11 +428,14 @@ def show_file_info(self,current):
             self.folder_list.setCurrentRow(index[0])
         full_path =self.found_files[self.file_list.row(current)]
         #Get file name
-        short_path =fm.elidedText(self.found_files[self.file_list.row(current)],Qt.ElideMiddle,600)
+        short_path =fm.elidedText(self.found_files[self.file_list.row(current)],Qt.ElideMiddle,500)
         self.info.setText(short_path)
         preview_file(self,full_path)
-    else:
-        self.info.setText("")
+    except Exception as e:
+            print("Preview routing error:", e)
+            self.text_view.setText("[Preview error]")
+            self.preview_top.setCurrentWidget(self.text_view)
+            self.preview_bottom.setVisible(False)
 #-----------------------------------------------------------------------   
 def open_file_location(self,item):
     import subprocess
@@ -407,7 +512,9 @@ def show_data(self,source=1):
     #----------------------------------------------------------------------
     if len(self.found_files)>0:
         for file in self.found_files_short:
-            self.file_list.addItem(file)
+            item = QListWidgetItem(file)
+            item.setData(Qt.UserRole, file)
+            self.file_list.addItem(item)
     self.file_label.setText(self.label[self.language]["Files"]+" "+ str(self.file_list.count()))
     if len(self.found_folders)>0:
         for folder in self.found_folders_short:
@@ -427,25 +534,6 @@ def filter_type(self):
                     dirname = dirname[1:]
                 filtered_folders.add(dirname)
     return filtered_files, filtered_folders
-#-----------------------------------------------------------------------
-def start_process(self):
-    self.elapsed = 0
-    # Show popup
-    self.popup.update_time(0)
-    self.popup.show()
-    self.timer.start(0)
-#-----------------------------------------------------------------------
-def update_time_counter(self):
-    self.elapsed += 1
-    self.popup.update_time(self.elapsed)
-
-    if self.elapsed >= self.limit_timer:
-        self.stop_all()
-#-----------------------------------------------------------------------
-
-def stop_all(self):
-    self.timer.stop()
-    self.popup.close()
 #-----------------------------------------------------------------------
 def search_files(self,source = 1):
     import re
@@ -487,7 +575,6 @@ def search_files(self,source = 1):
         reset_data(self)
         if not self.init:
             show_empty(self)
-    stop_all(self)
 #----------------------------------------------------------------------
 def resizeEvent(self, event):
     if hasattr(self, "original_pixmap") and self.original_pixmap:
@@ -495,22 +582,75 @@ def resizeEvent(self, event):
     super().resizeEvent(event)
 #----------------------------------------------------------------------
 def preview_file(self,path):
-    from media_view import clear_preview
-    clear_preview(self)
     ext = os.path.splitext(path)[1].lower()
-    ord_list =[ i  for i,(k,v) in enumerate(EXTENSIONS.items()) if ext in v] or [0]# Index of file in EXTENSIONS
+    # ord_list =[ i  for i,(k,v) in enumerate(EXTENSIONS.items()) if ext in v] or [0]# Index of file in EXTENSIONS
+    ord_list =[ i  for i,(k,v) in enumerate(self.ext_type.items()) if ext in v] or [0]# Index of file in EXTENSIONS
     if ord_list[0] == 0 :
-        self.preview.setText("[Unsupported file type]")
+        # self.preview.setText("[Unsupported file type]")
+        clear_layout = None  # placeholder; top already set by clear_preview
         return
     else:
         ord = ord_list[0]
-        
-    filetype = [k for k,v in VIEW_EXT.items() if ord in v][0]#Type to choose Preview code 
-    
-    if filetype == "other":
-        self.preview.setText("[Unsupported file type]")
+    # filetype = [k for k,v in VIEW_EXT.items() if ord in v][0]#Type to choose Preview code 
+    filetype = [k.lower() for k,v in self.filetype.items() if ord in v][0]#Type to choose Preview code 
+    # print(ext,filetype,ord)
+    if filetype == "text": #Include image types
+        main_text(self,path,ext,ord) # type: ignore
         return
-    elif filetype == "text":
-        main_txt(self,path,ext,ord)
-    elif filetype == "media":
-        main_media(self,path,ext,ord)
+    # if filetype == "cad":
+    #     main_txt(self,path,ext,ord) # type: ignore
+    #     return
+    # if filetype == "prog":
+    #     main_txt(self,path,ext,ord) # type: ignore
+    #     return
+    # elif filetype == "media":
+    #     main_media(self,path,ext,ord) # type: ignore
+    #     return
+    # else:
+    #     self.preview.setText("[Unsupported file type]")
+    #     return
+        
+    # IMAGE
+    # if filetype == "image":
+    #     # Ensure preview has a layout
+    #     if self.preview.layout() is None:
+    #         self.preview.setLayout(QVBoxLayout())
+
+    #     # Clear any previous top widgets
+    #     # (clear_preview already cleaned everything, but keep safe)
+    #     for child in self.preview.findChildren(QWidget):
+    #         child.setParent(None)
+
+    #     # Create a QLabel inside preview to show the image and store original pixmap
+    #     img_label = QLabel(self.preview)
+    #     img_label.setAlignment(Qt.AlignCenter)
+    #     img_label.setContentsMargins(0, 0, 0, 0)
+    #     img_label.setSizePolicy(img_label.sizePolicy().Expanding, img_label.sizePolicy().Expanding)
+
+    #     # load image
+    #     reader = QImageReader(path)
+    #     qimg = reader.read()
+    #     if qimg.isNull():
+    #         # fallback to unsupported text
+    #         self.preview.layout().addWidget(QLabel("[Cannot display image]"))
+    #         return
+
+    #     pixmap = QPixmap.fromImage(qimg)
+    #     self.original_pixmap = pixmap  # for resizeEvent handling
+
+    #     # scale to available size
+    #     w = max(1, self.preview.width() - 10)
+    #     h = max(1, self.preview.height() - 10)
+    #     scaled = pixmap.scaled(w, h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    #     # img_label.setPixmap(scaled)
+    #     self.preview.setPixmap(scaled)
+        
+    #     self.preview.layout().addWidget(img_label)
+    #     return
+    
+    # OTHER / UNSUPPORTED
+    # Leave default preview area (clear_preview put default label)
+    return
+
+# Note: removed the prior "clear_preview" definition that treated preview as QLabel.
+# The robust clear_preview() from media_view is used everywhere now.

@@ -6,12 +6,13 @@ from PySide6.QtCore import Qt #, QTimer, QUrl
 # from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtMultimediaWidgets import QVideoWidget
+from PySide6.QtMultimedia import QMediaDevices
 
 # Your project modules (must exist)
 from actions import *
 from languages import *
 # import view_txt
-from view_media import *
+from view_media import on_play_clicked
 
 # ---------------------------
 # Lightweight helper: InitInfo
@@ -239,11 +240,25 @@ class FileSearch(QWidget):
         pb_layout.setContentsMargins(6, 6, 6, 6)
 
         # Video widget and simple controls (handler will hook behavior)
+        # self.video_widget = QVideoWidget()
+        # self.video_widget.setMinimumSize(200, 100)
+        # self.media_player = QMediaPlayer(self)
+        # self.audio_output = QAudioOutput(self)
+        # self.media_player.setAudioOutput(self.audio_output)
+        self.media_player = QMediaPlayer(self)
+        
+        self.audio_output = QAudioOutput(self)
+        self.audio_output.setDevice(QMediaDevices.defaultAudioOutput())
+        self.audio_output.setVolume(0.5) # 50%
+        
         self.video_widget = QVideoWidget()
         self.video_widget.setMinimumSize(200, 100)
-        self.media_player = QMediaPlayer(self)
-        self.audio_output = QAudioOutput(self)
+#        Do not connect media output here — handler will call:
         self.media_player.setAudioOutput(self.audio_output)
+        self.media_player.setVideoOutput(self.video_widget) 
+
+        print("Audio device:", QMediaDevices.defaultAudioOutput().description())
+
 
         # Control placeholders - handler wires actual signals
         controls_layout = QVBoxLayout()
@@ -251,7 +266,7 @@ class FileSearch(QWidget):
         self.play_button = QPushButton("Play")
         self.stop_button = QPushButton("Stop")
         self.seek_slider = QSlider(Qt.Horizontal)
-        self.seek_slider.setRange(0, 1000)
+        self.seek_slider.setRange(0, 100)
         self.volume_slider = QSlider(Qt.Horizontal)
         self.volume_slider.setRange(0, 100)
         self.volume_slider.setValue(50)
@@ -267,8 +282,7 @@ class FileSearch(QWidget):
         pb_layout.addWidget(self.video_widget, stretch=3)
         pb_layout.addLayout(controls_layout, stretch=5)
         self.preview_bottom.setLayout(pb_layout)
-        # Do not connect media output here — handler will call:
-        self.media_player.setVideoOutput(self.video_widget)
+        
 
         # Vertical splitter (top and bottom)
         right_splitter = QSplitter(Qt.Vertical)
@@ -451,7 +465,11 @@ class FileSearchHandler(FileSearch):
         # Route selection through our handler that decides which preview to show
         self.file_list.currentItemChanged.connect(lambda current:show_file_info(self,current))
         self.file_list.itemDoubleClicked.connect(lambda item: open_file_location(self, item))
-
+        # Media controls
+        self.play_button.clicked.connect(on_play_clicked(self)) 
+        self.volume_slider.valueChanged.connect(
+            lambda v: self.audio_output.setVolume(v / 100.0)
+        )
         # Cancel / quit
         self.cancel_button.clicked.connect(QApplication.quit)
 

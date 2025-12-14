@@ -1,19 +1,36 @@
 # media_view.py
 import os
+from PySide6.QtMultimedia import QMediaDevices
 from PySide6.QtGui import QPixmap,QIcon
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtMultimedia import QMediaPlayer #, QAudioOutput
-# from PySide6.QtMultimediaWidgets import QVideoWidget
 
 def main_media(self, filepath,ext,ord):
     try:
-        url = QUrl.fromLocalFile(os.path.abspath(filepath))
-        self.media_player.setSource(url)
+        self.media_player.stop()
+        self.media_player.setSource(QUrl())
+        # url = QUrl.fromLocalFile(os.path.abspath(filepath))
+        
+        # self.media_player.setSource(url)
         self.preview_bottom.setVisible(True)
-        self.media_player.pause()
+        self.play_button.setEnabled(True)
+        self.media_player.stop()
+        self.media_player.setSource(QUrl.fromLocalFile(filepath))
+        self.media_player.setPosition(0)
+        # self.media_player.setMedia(QUrl.fromLocalFile(filepath))
+        # self.play_button.setText("Pause")
+        # self.media_player.play()
+        self.play_button.setEnabled(True)
+        self.stop_button.setEnabled(True)
         self.play_button.setText("Play")
+        
+        
+
+        
+        # self.media_player.pause()
+        # self.play_button.setText("Play")
     except Exception as e:
-        print("Media prepare error:", e)
+        self.play_button.setEnabled(False)
         self.text_view.setText("[Cannot prepare media]")
         self.preview_top.setCurrentWidget(self.text_view)
         self.preview_bottom.setVisible(False)

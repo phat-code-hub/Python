@@ -603,9 +603,9 @@ def preview_file(self,path):
     # if filetype == "prog":
     #     main_txt(self,path,ext,ord) # type: ignore
     #     return
-    elif filetype == "media":
-        main_media(self,path,ext,ord) # type: ignore
-        return
+    # elif filetype == "media":
+    #     main_media(self,path,ext,ord) # type: ignore
+    #     return
     # else:
     #     self.preview.setText("[Unsupported file type]")
     #     return

@@ -19,12 +19,12 @@ def main_media(self, filepath,ext,ord):
         self.media_player.setPosition(0)
         # self.media_player.setMedia(QUrl.fromLocalFile(filepath))
         # self.play_button.setText("Pause")
-        # self.media_player.play()
+        
         self.play_button.setEnabled(True)
         self.stop_button.setEnabled(True)
         self.play_button.setText("Play")
         
-        
+        self.media_player.play()
 
         
         # self.media_player.pause()

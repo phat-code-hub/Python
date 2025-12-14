@@ -5,7 +5,7 @@ import os
 import platform
 import ui_main
 import locale
-import view_media
+from view_media import *
 from view_txt  import *
 
 # from media_view import *
@@ -606,50 +606,11 @@ def preview_file(self,path):
     elif filetype == "media":
         main_media(self,path,ext,ord) # type: ignore
         return
-    # else:
-    #     self.preview.setText("[Unsupported file type]")
-    #     return
-        
-    # IMAGE
-    # if filetype == "image":
-    #     # Ensure preview has a layout
-    #     if self.preview.layout() is None:
-    #         self.preview.setLayout(QVBoxLayout())
-
-    #     # Clear any previous top widgets
-    #     # (clear_preview already cleaned everything, but keep safe)
-    #     for child in self.preview.findChildren(QWidget):
-    #         child.setParent(None)
-
-    #     # Create a QLabel inside preview to show the image and store original pixmap
-    #     img_label = QLabel(self.preview)
-    #     img_label.setAlignment(Qt.AlignCenter)
-    #     img_label.setContentsMargins(0, 0, 0, 0)
-    #     img_label.setSizePolicy(img_label.sizePolicy().Expanding, img_label.sizePolicy().Expanding)
-
-    #     # load image
-    #     reader = QImageReader(path)
-    #     qimg = reader.read()
-    #     if qimg.isNull():
-    #         # fallback to unsupported text
-    #         self.preview.layout().addWidget(QLabel("[Cannot display image]"))
-    #         return
-
-    #     pixmap = QPixmap.fromImage(qimg)
-    #     self.original_pixmap = pixmap  # for resizeEvent handling
-
-    #     # scale to available size
-    #     w = max(1, self.preview.width() - 10)
-    #     h = max(1, self.preview.height() - 10)
-    #     scaled = pixmap.scaled(w, h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-    #     # img_label.setPixmap(scaled)
-    #     self.preview.setPixmap(scaled)
-        
-    #     self.preview.layout().addWidget(img_label)
-    #     return
-    
-    # OTHER / UNSUPPORTED
-    # Leave default preview area (clear_preview put default label)
+    else:
+        self.text_view.setText("[Unsupported file type]")
+        self.preview_top.setCurrentWidget(self.text_view)
+        return
+#---------------------------------------------------------------------- 
     return
 
 # Note: removed the prior "clear_preview" definition that treated preview as QLabel.

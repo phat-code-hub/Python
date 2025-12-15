@@ -480,7 +480,7 @@ def preview_file(self,path):
     else:
         ord = ord_list[0]
     filetype = [k.lower() for k,v in self.filetype.items() if ord in v][0]#Type to choose Preview code 
-    SetBottomView(self,False)
+    # SetBottomView(self,False)
     if filetype == "text": #Include image types
         main_text(self,path,ext,ord) # type: ignore
     # if filetype == "cad":
@@ -488,7 +488,7 @@ def preview_file(self,path):
     # if filetype == "prog":
     #     main_txt(self,path,ext,ord) # type: ignore
     elif filetype == "media":
-        SetBottomView(self,True)
+        # SetBottomView(self,True)
         # print(self.preview_bottom.isVisible())
         view_media.main_media(self,path,ext,ord) # type: ignore
     else:

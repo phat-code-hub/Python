@@ -6,20 +6,20 @@ from PySide6.QtMultimedia import QMediaPlayer
 import actions
 
 def main_media(self, filepath,ext,ord):
+    self.media_player = QMediaPlayer()
+    self.media_player.setVideoOutput(self.video_widget)
+    self.media_player.setAudioOutput(self.audio_output)
     try:
-        #Enabled controls 
-        actions.SetBottomView(self,True)
         self.media_player.setSource(QUrl.fromLocalFile(filepath))
         self.media_player.setPosition(0)
         # self.media_player.stop()
-        try:
-            self.play_button.clicked.disconnect()
-            self.stop_button.clicked.disconnect()
-        except TypeError:
-            pass    
+        # try:
+        #     self.play_button.clicked.disconnect()
+        #     self.stop_button.clicked.disconnect()
+        # except TypeError:
+        #     pass    
         self.media_player.play()
-        print("Play:",self.play_button.inEnabled())
-        print("Stop:",self.stop_button.inEnabled())
+        
         # self.play_button.clicked.connect(lambda:on_play_clicked(self)) 
         # self.stop_button.clicked.connect(lambda:on_stop_clicked(self))
         # self.volume_slider.valueChanged.connect(
@@ -32,7 +32,7 @@ def main_media(self, filepath,ext,ord):
     except Exception as e:
         self.text_view.setText("[Cannot prepare media]")
         self.preview_top.setCurrentWidget(self.text_view)
-        actions.SetBottomView(self,False)
+        # actions.SetBottomView(self,False)
 #------------------------------------------------------------------------
 
 

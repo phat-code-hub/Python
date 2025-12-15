@@ -79,7 +79,7 @@ class FileSearch(QWidget):
         self.default_values()
         self._build_ui()
         # Hide bottom area initially
-        self.preview_bottom.setVisible(False)
+        # self.preview_bottom.setVisible(False)
         
     def default_values(self):
         self.REG_KEY = InitInfo().REG_KEY
@@ -235,7 +235,7 @@ class FileSearch(QWidget):
 
         self.media_player.setAudioOutput(self.audio_output)
         #Info Audio default output device
-        # print("Audio device:", QMediaDevices.defaultAudioOutput().description())
+        print("Audio device:", QMediaDevices.defaultAudioOutput().description())
 
         # Media Controls
         controls_layout = QVBoxLayout()
@@ -431,9 +431,10 @@ class FileSearchHandler(FileSearch):
         self.file_list.itemDoubleClicked.connect(lambda item: open_file_location(self, item))
         # Media controls
         # Media controls (CONNECT ONCE)
+        
         if self.preview_bottom.isVisible():
-            self.play_button.clicked.connect(on_play_clicked)
-            self.stop_button.clicked.connect(on_stop_clicked)
+            self.play_button.clicked.connect(on_play_clicked(self))
+            self.stop_button.clicked.connect(on_stop_clicked(self))
 
             self.seek_slider.valueChanged.connect(on_seek_slider_moved(self,60))
             self.volume_slider.valueChanged.connect(on_volume_changed(self,20))

@@ -12,16 +12,18 @@ def main_media(self, filepath,ext,ord):
     try:
         self.media_player.setSource(QUrl.fromLocalFile(filepath))
         self.media_player.setPosition(0)
-        # self.media_player.stop()
-        # try:
-        #     self.play_button.clicked.disconnect()
-        #     self.stop_button.clicked.disconnect()
-        # except TypeError:
-        #     pass    
+        self.media_player.pause()
+        self.play_button.setText("Play")
+        self.preview_bottom.setVisible(True)
         self.media_player.play()
         
-        # self.play_button.clicked.connect(lambda:on_play_clicked(self)) 
-        # self.stop_button.clicked.connect(lambda:on_stop_clicked(self))
+        # self.play_button.clicked.connect(on_play_clicked(self))
+        # self.stop_button.clicked.connect(on_stop_clicked(self))
+
+        # self.seek_slider.valueChanged.connect(on_seek_slider_moved(self,60))
+        # self.volume_slider.valueChanged.connect(on_volume_changed(self,20))
+        # self.media_player.durationChanged.connect(on_duration_changed(self))
+        
         # self.volume_slider.valueChanged.connect(
         #     lambda v: self.audio_output.setVolume(v / 100.0)
         # )

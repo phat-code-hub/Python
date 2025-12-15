@@ -262,10 +262,10 @@ class FileSearch(QWidget):
         pb_layout.addWidget(self.video_widget, stretch=3)
         pb_layout.addLayout(controls_layout, stretch=5)
         self.preview_bottom.setLayout(pb_layout)
-        try:
-            self.media_player.setVideoOutput(self.video_widget)
-        except:
-            pass
+        # try:
+        #     self.media_player.setVideoOutput(self.video_widget)
+        # except:
+        #     pass
         # Vertical splitter (top and bottom)
         right_splitter = QSplitter(Qt.Vertical)
         right_splitter.addWidget(self.preview_top)
@@ -429,24 +429,13 @@ class FileSearchHandler(FileSearch):
         # Route selection through our handler that decides which preview to show
         self.file_list.currentItemChanged.connect(lambda current:show_file_info(self,current))
         self.file_list.itemDoubleClicked.connect(lambda item: open_file_location(self, item))
-        # Media controls
-        # Media controls (CONNECT ONCE)
         
-        if self.preview_bottom.isVisible():
-            self.play_button.clicked.connect(on_play_clicked(self))
-            self.stop_button.clicked.connect(on_stop_clicked(self))
+        # self.play_button.clicked.connect(on_play_clicked(self))
+        # self.stop_button.clicked.connect(on_stop_clicked(self))
 
-            self.seek_slider.valueChanged.connect(on_seek_slider_moved(self,60))
-            self.volume_slider.valueChanged.connect(on_volume_changed(self,20))
-            self.media_player.durationChanged.connect(on_duration_changed(self))
-        # if self.preview_bottom.isVisible():
-        #     self.play_button.clicked.connect(on_play_clicked(self)) 
-        #     self.stop_button.clicked.connect(on_stop_clicked(self))
-        #     self.volume_slider.valueChanged.connect(
-        #         lambda v: self.audio_output.setVolume(v / 100.0)
-        #     )
-        #     self.media_player.positionChanged.connect(on_position_changed(self,50))
-        #     self.media_player.durationChanged.connect(on_duration_changed(self,50))
+        # self.seek_slider.valueChanged.connect(on_seek_slider_moved(self,60))
+        # self.volume_slider.valueChanged.connect(on_volume_changed(self,20))
+        # self.media_player.durationChanged.connect(on_duration_changed(self))
         # Cancel / quit
         self.cancel_button.clicked.connect(QApplication.quit)
 

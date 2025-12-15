@@ -32,6 +32,13 @@ ERROR ={
                 "Open":"Không thể truy cập thư mục!",
                 },
 }
+
+REG_DATA = {
+    "Language": "English",
+    "SearchPath": "~/Documents",
+    "Passed": "True"
+    }
+
 REG_KEY = "FileSearch"
 APP_ID  =""
 MAPPING = {

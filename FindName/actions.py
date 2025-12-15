@@ -1,21 +1,17 @@
 # actions.py
 #--------------------------------------------------------------------------------------
 import os
-# import openpyxl
 import platform
 import ui_main
 import locale
+import view_media
 from view_media import *
 from view_txt  import *
 
-# from media_view import *
 from languages import *
-from PySide6.QtWidgets import (QLabel,QWidget,QVBoxLayout,QListWidgetItem,
-                                QMessageBox,QFileDialog,
-                                QLineEdit,QApplication)
+from PySide6.QtWidgets import (QListWidgetItem,QMessageBox,QFileDialog,QLineEdit,QApplication)
 from PySide6.QtCore import Qt,QUrl
-from PySide6.QtGui import QFontMetrics,QDesktopServices,QPixmap,QImageReader 
-# from media_view import main_media,clear_preview
+from PySide6.QtGui import QFontMetrics,QDesktopServices
 #--------------------------------------------------------------------------------------
 def PC_Info(self):
     system = platform.system()
@@ -60,7 +56,7 @@ def check_registration(self): #For UnitFrom
                 self.LANG = winreg.QueryValueEx(reg_key, "Language")
                 self.PATH = winreg.QueryValueEx(reg_key, "SearchPath")
                 passed = True
-                winreg.CloseKey(reg_key)   
+                winreg.CloseKey(reg_key)
         except Exception as e:
             pass
     # MAC
@@ -99,7 +95,6 @@ def check_license(self,password):
     # if re.match(r"^0\w*",password):
     if "0" in password:
         self.close()
-        # ui_main.CheckForm().close()
         create_registry(self)
         ui_main.FileSearchHandler().show()
     else:
@@ -157,18 +152,13 @@ def get_registry_values(self):
     return lang,path
 #----------------------------------------------------------------
 def create_registry(self):
-    data = {
-            "Language": "English",
-            "SearchPath": "~/Documents",
-            "Passed": "True"
-            }
     # Windows
     if self.OS == "WIN":
         import winreg
         reg_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{self.REG_KEY}")
-        winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ,"English")
+        winreg.SetValueEx(reg_key, "Language", 0, winreg.REG_SZ,REG_DATA["Language"])
         winreg.SetValueEx(reg_key, "SearchPath", 0, winreg.REG_SZ, os.path.expanduser("~")+"\\Documents")
-        winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, "True")
+        winreg.SetValueEx(reg_key, "Passed", 0, winreg.REG_SZ, REG_DATA["Passed"])
         winreg.CloseKey(reg_key)
     # MAC
     elif self.OS == "MAC":
@@ -178,7 +168,8 @@ def create_registry(self):
         plist_path = Path("~/Library/Preferences").expanduser() / f"{self.REG_KEY.lower()}.plist"
         try:
             with open(plist_path, "wb") as f:
-                plistlib.dump(data, f)
+                # plistlib.dump(data, f)
+                plistlib.dump(REG_DATA, f)
         except Exception as e:
             print("macOS plist save error:", e)
     # Linux
@@ -190,16 +181,11 @@ def create_registry(self):
         file = Path("~/.config").expanduser() / f"{self.REG_KEY} / settings.json"
         try:
             with file.open("w", encoding="utf-8") as f:
-                json.dump(data, f)
+                json.dump(REG_DATA, f)
         except Exception as e:
                 print("Linux save error:", e)
 #----------------------------------------------------------------   
 def saved_to_registry(self):
-        data = {
-                "Language": self.language,
-                "SearchPath": self.search_path,
-                "Passed": "True"
-            }
         # Windows
         if self.OS == "WIN":
             import winreg
@@ -215,21 +201,16 @@ def saved_to_registry(self):
             plist_path = Path("~/Library/Preferences").expanduser() / f"{self.REG_KEY}.plist"
             try:
                 with open(plist_path, "wb") as f:
-                    plistlib.dump(data, f)
+                    plistlib.dump(REG_DATA, f)
             except Exception as e:
                 print("macOS save error:", e)
         # Linux
         else:
             import json
             file = Path("~/.config").expanduser() / f"{self.REG_KEY} / settings.json"
-            data = {
-                "Language": "English",
-                "SearchPath": "~/Documents",
-                "Passed": "True"
-                }
             try:
                 with file.open("w", encoding="utf-8") as f:
-                    json.dump(data, f)
+                    json.dump(REG_DATA, f)
             except Exception as e:
                     print("Linux save error:", e)
 #----------------------------------------------------------------
@@ -314,98 +295,6 @@ def change_logic(self):
     else:
         self.logic_index = self.logics["NOT"]
     search_files(self)
-#----------------------------------------------------------------
-
-# def on_file_selected(self, current, previous=None):
-        # self.info.setTextInteractionFlags(self.info.textInteractionFlags() | Qt.TextSelectableByMouse)
-        # fm = QFontMetrics(self.info.font())
-        # """Routing: decide how to preview a selected file and whether to show media controls."""
-        # try:
-        #     if current is None:
-        #         return
-        #     file_index = self.file_list.currentRow()
-        #     # get absolute path from item data if present
-        #     filename = current.data(Qt.UserRole) or current.text()
-        #     if not filename:
-        #         filename = current.text()
-        #     file_path = os.path.dirname(self.found_files[file_index]).lower()
-        #     file_path = file_path.removeprefix(self.search_path).removeprefix(os.path.sep)
-        #     foundFolders =[i.text().lower() for i in self.folder_list.findItems("",Qt.MatchContains)]
-        #     index = list(filter(lambda i:foundFolders[i] in file_path,range(len(foundFolders))))
-        #     if index:
-        #         self.folder_list.setCurrentRow(index[0])
-                    
-            # # try to resolve relative path against search_path
-            # if not os.path.isabs(filename) and getattr(self, "search_path", None):
-            #     candidate = os.path.join(self.search_path, filepath)
-            #     if os.path.exists(candidate):
-            #         filepath = candidate
-
-            # if not os.path.exists(filepath):
-            #     self.text_view.setText("[File not found]")
-            #     self.preview_top.setCurrentWidget(self.text_view)
-            #     self.preview_bottom.setVisible(False)
-            #     return
-            #Get selected file folder path
-            # file_path = file_path.removeprefix(self.search_path).removeprefix(os.path.sep)
-            # foundFolders =[i.text().lower() for i in self.folder_list.findItems("",Qt.MatchContains)]
-            # index = list(filter(lambda i:foundFolders[i] in file_path,range(len(foundFolders))))
-            # if index:
-            #     self.folder_list.setCurrentRow(index[0])
-            
-            # print(filepath)
-            # fpath, ext = os.path.splitext(file_path)
-            # ext = ext.lower()
-            # print(fpath,ext)
-
-            # Media: audio/video -> thumbnail top + enable bottom controls
-        #     if ext in getattr(self, "audio_exts", set()) or ext in getattr(self, "video_exts", set()):
-        #         media_view.show_media_thumbnail(self, filepath)
-        #         media_view.prepare_media_player(self, filepath)
-        #         # media_view.prepare_media_player will show preview_bottom
-        #         return
-
-        #     # Text/document/images handled by txt_view functions
-        #     if ext in getattr(self, "readable_text_ext", set()) or ext in (".txt", ".md", ".py", ".log", ".json"):
-        #         txt_view.preview_text_file(self, filepath)
-        #         self.preview_bottom.setVisible(False)
-        #         return
-
-        #     # images (use QImageReader supported formats)
-        #     try:
-        #         from PySide6.QtGui import QImageReader
-        #         supported_exts = {("." + bytes(fmt).decode()).lower() for fmt in QImageReader.supportedImageFormats()}
-        #     except Exception:
-        #         supported_exts = {".png", ".jpg", ".jpeg", ".bmp", ".gif"}
-
-        #     if ext in supported_exts:
-        #         txt_view.preview_image_file(self, filepath)
-        #         self.preview_bottom.setVisible(False)
-        #         return
-
-        #     # docx / xlsx
-        #     if ext == ".docx" or ext == ".xlsx":
-        #         txt_view.preview_document_file(self, filepath)
-        #         self.preview_bottom.setVisible(False)
-        #         return
-
-        #     # CAD placeholder
-        #     if ext in getattr(self, "readable_cad_ext", set()):
-        #         self.cad_view.setText(f"CAD preview not available for {os.path.basename(filepath)}")
-        #         self.preview_top.setCurrentWidget(self.cad_view)
-        #         self.preview_bottom.setVisible(False)
-        #         return
-
-        #     # fallback
-        #     self.text_view.setText("[Unsupported file type]")
-        #     self.preview_top.setCurrentWidget(self.text_view)
-        #     self.preview_bottom.setVisible(False)
-
-        # except Exception as e:
-        #     print("Preview routing error:", e)
-        #     self.text_view.setText("[Preview error]")
-        #     self.preview_top.setCurrentWidget(self.text_view)
-        #     self.preview_bottom.setVisible(False)
 
 #----------------------------------------------------------------
 def show_file_info(self,current):
@@ -583,35 +472,37 @@ def resizeEvent(self, event):
 #----------------------------------------------------------------------
 def preview_file(self,path):
     ext = os.path.splitext(path)[1].lower()
-    # ord_list =[ i  for i,(k,v) in enumerate(EXTENSIONS.items()) if ext in v] or [0]# Index of file in EXTENSIONS
     ord_list =[ i  for i,(k,v) in enumerate(self.ext_type.items()) if ext in v] or [0]# Index of file in EXTENSIONS
     if ord_list[0] == 0 :
-        # self.preview.setText("[Unsupported file type]")
-        clear_layout = None  # placeholder; top already set by clear_preview
-        return
-    else:
-        ord = ord_list[0]
-    # filetype = [k for k,v in VIEW_EXT.items() if ord in v][0]#Type to choose Preview code 
-    filetype = [k.lower() for k,v in self.filetype.items() if ord in v][0]#Type to choose Preview code 
-    # print(ext,filetype,ord)
-    if filetype == "text": #Include image types
-        main_text(self,path,ext,ord) # type: ignore
-        return
-    # if filetype == "cad":
-    #     main_txt(self,path,ext,ord) # type: ignore
-    #     return
-    # if filetype == "prog":
-    #     main_txt(self,path,ext,ord) # type: ignore
-    #     return
-    elif filetype == "media":
-        main_media(self,path,ext,ord) # type: ignore
-        return
-    else:
         self.text_view.setText("[Unsupported file type]")
         self.preview_top.setCurrentWidget(self.text_view)
         return
-#---------------------------------------------------------------------- 
-    return
+    else:
+        ord = ord_list[0]
+    filetype = [k.lower() for k,v in self.filetype.items() if ord in v][0]#Type to choose Preview code 
+    SetBottomView(self,False)
+    if filetype == "text": #Include image types
+        main_text(self,path,ext,ord) # type: ignore
+    # if filetype == "cad":
+    #     main_txt(self,path,ext,ord) # type: ignore
+    # if filetype == "prog":
+    #     main_txt(self,path,ext,ord) # type: ignore
+    elif filetype == "media":
+        SetBottomView(self,True)
+        # print(self.preview_bottom.isVisible())
+        view_media.main_media(self,path,ext,ord) # type: ignore
+    else:
+        self.text_view.setText("[Unsupported file type]")
+        self.preview_top.setCurrentWidget(self.text_view)
+    # return
 
-# Note: removed the prior "clear_preview" definition that treated preview as QLabel.
-# The robust clear_preview() from media_view is used everywhere now.
+
+def SetBottomView(self, show= False):
+    self.preview_bottom.setVisible(show)
+
+    if show:
+        self.preview_bottom.setMinimumHeight(80)
+    else:
+        self.preview_bottom.setMinimumHeight(0)
+
+    self.preview_bottom.updateGeometry()

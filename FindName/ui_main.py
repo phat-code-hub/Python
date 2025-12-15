@@ -2,24 +2,21 @@
 import os
 import sys
 from PySide6.QtWidgets import *
-from PySide6.QtCore import Qt #, QTimer, QUrl
-# from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtCore import Qt
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtMultimediaWidgets import QVideoWidget
 from PySide6.QtMultimedia import QMediaDevices
 
-# Your project modules (must exist)
 from actions import *
 from languages import *
-# import view_txt
-from view_media import on_play_clicked
+
+from view_media import *# on_play_clicked
 
 # ---------------------------
-# Lightweight helper: InitInfo
+# Lightweight  InitInfo
 # ---------------------------
 class InitInfo:
     def __init__(self):
-        # Keep simple: only collect values you need right away
         self.REG_KEY = REG_KEY
         self.OS, self.LANG = PC_Info(self)
 # ---------------------------
@@ -69,7 +66,7 @@ def resource_path(self,relative_path):
         return os.path.join(base_path, relative_path)
 
 # ---------------------------
-# UI-only class (no signals)
+# UI-only class 
 # ---------------------------
 class FileSearch(QWidget):
     """
@@ -81,6 +78,9 @@ class FileSearch(QWidget):
         super().__init__()
         self.default_values()
         self._build_ui()
+        # Hide bottom area initially
+        self.preview_bottom.setVisible(False)
+        
     def default_values(self):
         self.REG_KEY = InitInfo().REG_KEY
         self.OS = InitInfo().OS
@@ -104,29 +104,16 @@ class FileSearch(QWidget):
         # Classify previewable extensions
         #---------------------------------
         self.filetype = VIEW_EXT
-        # self.readable_text_ext = TEXT_EXT
         # self.readable_cad_ext =CAD_EXT
         self.init =True
-    # def _default_values_placeholder(self):
-        """
-        Minimal placeholders — FileSearchHandler will override with real values.
-        This prevents attribute errors if handler later accesses them.
-        """
-        # self.APP_NAME = "App"
-        # self.audio_exts = {".mp3", ".wav", ".ogg", ".m4a", ".flac"}
-        # self.video_exts = {".mp4", ".avi", ".mkv", ".mov", ".wmv"}
-        # self.readable_text_ext = {".txt", ".md", ".py", ".json"}
-        # self.readable_cad_ext = set()
 
     def _build_ui(self):
         # Hold basic Info
-        # Basic window
         self.setWindowTitle(self.APP_NAME)
         self.setGeometry(100, 100, 1000, 600)
         self.icon = resource_path(self,"favicon.ico")
         # ---------- LEFT PANEL (file controls) ----------
         layoutL = QVBoxLayout()
-
         # Language radios (actual labels will be set by handler)
         lang_layout = QHBoxLayout()
         self.language_radio = QButtonGroup()
@@ -239,28 +226,18 @@ class FileSearch(QWidget):
         pb_layout = QHBoxLayout()
         pb_layout.setContentsMargins(6, 6, 6, 6)
 
-        # Video widget and simple controls (handler will hook behavior)
-        # self.video_widget = QVideoWidget()
-        # self.video_widget.setMinimumSize(200, 100)
-        # self.media_player = QMediaPlayer(self)
-        # self.audio_output = QAudioOutput(self)
-        # self.media_player.setAudioOutput(self.audio_output)
         self.media_player = QMediaPlayer(self)
-        
+
+        #Audio Component
         self.audio_output = QAudioOutput(self)
         self.audio_output.setDevice(QMediaDevices.defaultAudioOutput())
-        self.audio_output.setVolume(0.5) # 50%
-        
-        self.video_widget = QVideoWidget()
-        self.video_widget.setMinimumSize(200, 100)
-#        Do not connect media output here — handler will call:
+        self.audio_output.setVolume(0.1) # 10%
+
         self.media_player.setAudioOutput(self.audio_output)
-        self.media_player.setVideoOutput(self.video_widget) 
+        #Info Audio default output device
+        # print("Audio device:", QMediaDevices.defaultAudioOutput().description())
 
-        print("Audio device:", QMediaDevices.defaultAudioOutput().description())
-
-
-        # Control placeholders - handler wires actual signals
+        # Media Controls
         controls_layout = QVBoxLayout()
         controls_row = QHBoxLayout()
         self.play_button = QPushButton("Play")
@@ -278,12 +255,17 @@ class FileSearch(QWidget):
         controls_row.addWidget(self.volume_slider)
         controls_layout.addLayout(controls_row)
         controls_layout.addStretch()
-
+        
+        # Video widget
+        self.video_widget = QVideoWidget()
+        self.video_widget.setMinimumSize(400, 200)
         pb_layout.addWidget(self.video_widget, stretch=3)
         pb_layout.addLayout(controls_layout, stretch=5)
         self.preview_bottom.setLayout(pb_layout)
-        
-
+        try:
+            self.media_player.setVideoOutput(self.video_widget)
+        except:
+            pass
         # Vertical splitter (top and bottom)
         right_splitter = QSplitter(Qt.Vertical)
         right_splitter.addWidget(self.preview_top)
@@ -306,8 +288,6 @@ class FileSearch(QWidget):
         main_layout.addWidget(splitter)
         self.setLayout(main_layout)
 
-        # Hide bottom area initially
-        self.preview_bottom.setVisible(False)
 
     # Small utility helpers (handler can use)
     def _set_file_item(self, filename, fullpath):
@@ -367,15 +347,6 @@ class FileSearchHandler(FileSearch):
         except Exception as e:
             print("Warning: change_tooltips() failed:", e)
 
-        # Wire media output (connect video output to widget)
-        try:
-            self.media_player.setVideoOutput(self.video_widget)
-        except Exception:
-            pass
-        # Hook media player signals
-        self.media_player.positionChanged.connect(on_position_changed(self,50))
-        self.media_player.durationChanged.connect(on_duration_changed(self,50))
-
         # Wire all signals here (exactly once)
         self._connect_signals()
     # -- default/state restoration -------------------
@@ -390,7 +361,7 @@ class FileSearchHandler(FileSearch):
             self.REG_KEY = info.REG_KEY
             self.OS = info.OS
             self.LOCALE = info.LANG
-            # language and search_path are provided by get_registry_values (your actions.py)
+            # get language and search_path
             self.language, self.search_path = get_registry_values(self)
         except Exception:
             # Fallbacks if the above calls fail
@@ -431,14 +402,7 @@ class FileSearchHandler(FileSearch):
             # placeholder
             self.search_input.setPlaceholderText(self.place_holder[self.language])
         except Exception:
-            pass     
-
-        # Ensure ext sets exist
-        # try:
-        #     self.audio_exts = {".mp3", ".wav", ".ogg", ".m4a", ".flac"}
-        #     self.video_exts = {".mp4", ".avi", ".mkv", ".mov", ".wmv"}
-        # except Exception:
-        #     pass
+            pass
 
     # -- connect all event handlers here ----------------
     def _connect_signals(self):
@@ -466,14 +430,27 @@ class FileSearchHandler(FileSearch):
         self.file_list.currentItemChanged.connect(lambda current:show_file_info(self,current))
         self.file_list.itemDoubleClicked.connect(lambda item: open_file_location(self, item))
         # Media controls
-        self.play_button.clicked.connect(on_play_clicked(self)) 
-        self.volume_slider.valueChanged.connect(
-            lambda v: self.audio_output.setVolume(v / 100.0)
-        )
+        # Media controls (CONNECT ONCE)
+        if self.preview_bottom.isVisible():
+            self.play_button.clicked.connect(on_play_clicked)
+            self.stop_button.clicked.connect(on_stop_clicked)
+
+            self.seek_slider.valueChanged.connect(on_seek_slider_moved(self,60))
+            self.volume_slider.valueChanged.connect(on_volume_changed(self,20))
+            self.media_player.durationChanged.connect(on_duration_changed(self))
+        # if self.preview_bottom.isVisible():
+        #     self.play_button.clicked.connect(on_play_clicked(self)) 
+        #     self.stop_button.clicked.connect(on_stop_clicked(self))
+        #     self.volume_slider.valueChanged.connect(
+        #         lambda v: self.audio_output.setVolume(v / 100.0)
+        #     )
+        #     self.media_player.positionChanged.connect(on_position_changed(self,50))
+        #     self.media_player.durationChanged.connect(on_duration_changed(self,50))
         # Cancel / quit
         self.cancel_button.clicked.connect(QApplication.quit)
 
     #--------------------------------------------------------
+    # override to ensure proper cleanup
     def closeEvent(self, event):
         # Save to Windows Registry before closing
         try:
@@ -482,71 +459,5 @@ class FileSearchHandler(FileSearch):
             print(f"Registry write failed: {e}")
 
         super().closeEvent(event)  # Call the default close event handler event.accept()  # Allow the window to close
-
-    # -- preview & search routing -----------------------
-    # def _on_file_selected(self, current, previous=None):
-    #     """Routing: decide how to preview a selected file and whether to show media controls."""
-    #     try:
-    #         if current is None:
-    #             return
-
-    
-    #         # CAD placeholder
-    #         if ext in getattr(self, "readable_cad_ext", set()):
-    #             self.cad_view.setText(f"CAD preview not available for {os.path.basename(filepath)}")
-    #             self.preview_top.setCurrentWidget(self.cad_view)
-    #             self.preview_bottom.setVisible(False)
-    #             return
-
-    #         # fallback
-    #         self.text_view.setText("[Unsupported file type]")
-    #         self.preview_top.setCurrentWidget(self.text_view)
-    #         self.preview_bottom.setVisible(False)
-
-    #     except Exception as e:
-    #         print("Preview routing error:", e)
-    #         self.text_view.setText("[Preview error]")
-    #         self.preview_top.setCurrentWidget(self.text_view)
-    #         self.preview_bottom.setVisible(False)
-
-    # -- media player helpers ----------------------------
-    # def _on_play_clicked(self):
-    #     if self.media_player.playbackState() == QMediaPlayer.PlayingState:
-    #         self.media_player.pause()
-    #         self.play_button.setText("Play")
-    #     else:
-    #         self.media_player.play()
-    #         self.play_button.setText("Pause")
-
-    # def _on_stop_clicked(self):
-    #     self.media_player.stop()
-    #     self.play_button.setText("Play")
-
-    # def _on_position_changed(self, pos):
-    #     if self.media_player.duration() > 0:
-    #         val = int(pos * 1000 / self.media_player.duration())
-    #         self.seek_slider.blockSignals(True)
-    #         self.seek_slider.setValue(val)
-    #         self.seek_slider.blockSignals(False)
-
-    # def _on_duration_changed(self, dur):
-    #     # duration known - can be used to update UI (optional)
-    #     pass
-
-    # def _on_seek_slider_moved(self, value):
-    #     if self.media_player.duration() > 0:
-    #         position = int(self.media_player.duration() * (value / 1000.0))
-    #         self.media_player.setPosition(position)
-
-    # def _on_volume_changed(self, value):
-    #     self.audio_output.setVolume(max(0.0, min(1.0, value / 100.0)))
-
-    # override to ensure proper cleanup
-    def closeEvent(self, event):
-        try:
-            saved_to_registry(self)
-        except Exception as e:
-            print(f"Registry write failed: {e}")
-        super().closeEvent(event)
 
 # End of ui_main.py

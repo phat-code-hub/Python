@@ -490,7 +490,7 @@ def preview_file(self,path):
     elif filetype == "media":
         # SetBottomView(self,True)
         # print(self.preview_bottom.isVisible())
-        view_media.main_media(self,path,ext,ord) # type: ignore
+        main_media(self,path,ext,ord)
     else:
         self.text_view.setText("[Unsupported file type]")
         self.preview_top.setCurrentWidget(self.text_view)

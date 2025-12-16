@@ -69,18 +69,12 @@ def resource_path(self,relative_path):
 # UI-only class 
 # ---------------------------
 class FileSearch(QWidget):
-    """
-    UI-only: create widgets, layouts and preview areas.
-    Do NOT connect signals or implement logic here.
-    FileSearchHandler will subclass this and attach behavior.
-    """
     def __init__(self):
         super().__init__()
         self.default_values()
         self._build_ui()
-        # Hide bottom area initially
-        # self.preview_bottom.setVisible(False)
-        
+        self._build_layout()
+    #-----------------------------------------   
     def default_values(self):
         self.REG_KEY = InitInfo().REG_KEY
         self.OS = InitInfo().OS
@@ -112,10 +106,11 @@ class FileSearch(QWidget):
         self.setWindowTitle(self.APP_NAME)
         self.setGeometry(100, 100, 1000, 600)
         self.icon = resource_path(self,"favicon.ico")
-        # ---------- LEFT PANEL (file controls) ----------
-        layoutL = QVBoxLayout()
-        # Language radios (actual labels will be set by handler)
-        lang_layout = QHBoxLayout()
+        #================================================
+        #      LEFT PANEL (file controls)
+        #================================================
+        self.layoutL = QVBoxLayout()
+        #----------------------------------
         self.language_radio = QButtonGroup()
         self.english_radio = QRadioButton("English")
         self.japanese_radio = QRadioButton("Japanese")
@@ -123,34 +118,19 @@ class FileSearch(QWidget):
         self.language_radio.addButton(self.japanese_radio, 0)
         self.language_radio.addButton(self.english_radio, 1)
         self.language_radio.addButton(self.vietnamese_radio, 2)
-        lang_layout.addWidget(self.japanese_radio)
-        lang_layout.addWidget(self.english_radio)
-        lang_layout.addWidget(self.vietnamese_radio)
-        layoutL.addLayout(lang_layout)
 
         # Search folder row
-        search_folder_layout = QHBoxLayout()
         self.search_folder_label = QLabel("Search Path")
         self.search_folder_path = QLabel("")
         self.search_folder_change = QPushButton("...")
         self.search_folder_change.setFixedSize(50, 30)
-        search_folder_layout.addWidget(self.search_folder_label)
-        search_folder_layout.addWidget(self.search_folder_path)
-        search_folder_layout.addWidget(self.search_folder_change)
-        layoutL.addLayout(search_folder_layout)
 
         # Keyword row
-        keyword_layout = QHBoxLayout()
         self.search_label = QLabel("Keyword")
         self.search_input = QLineEdit()
         self.search_button = QPushButton("Search")
-        keyword_layout.addWidget(self.search_label)
-        keyword_layout.addWidget(self.search_input)
-        keyword_layout.addWidget(self.search_button)
-        layoutL.addLayout(keyword_layout)
 
         # Search logic radios
-        search_logic_layout = QHBoxLayout()
         self.search_radio = QButtonGroup()
         self.or_radio = QRadioButton("OR")
         self.and_radio = QRadioButton("AND")
@@ -158,49 +138,33 @@ class FileSearch(QWidget):
         self.search_radio.addButton(self.or_radio, 0)
         self.search_radio.addButton(self.and_radio, 1)
         self.search_radio.addButton(self.not_radio, 2)
-        search_logic_layout.addWidget(self.or_radio)
-        search_logic_layout.addWidget(self.and_radio)
-        search_logic_layout.addWidget(self.not_radio)
-        layoutL.addLayout(search_logic_layout)
 
         # File type combo
-        file_type_layout = QHBoxLayout()
         self.file_type_label = QLabel("File Type")
         self.file_type_combo = QComboBox()
-        file_type_layout.addWidget(self.file_type_label)
-        file_type_layout.addWidget(self.file_type_combo)
-        layoutL.addLayout(file_type_layout)
 
         # Folders and files list widgets
-        list_layout = QHBoxLayout()
         # Folders
-        folder_layout = QVBoxLayout()
         self.folder_label = QLabel("Folders")
         self.folder_list = QListWidget()
-        folder_layout.addWidget(self.folder_label)
-        folder_layout.addWidget(self.folder_list)
-        list_layout.addLayout(folder_layout)
         # Files
-        file_layout = QVBoxLayout()
         self.file_label = QLabel("Files")
         self.file_list = QListWidget()
-        file_layout.addWidget(self.file_label)
-        file_layout.addWidget(self.file_list)
-        list_layout.addLayout(file_layout)
-        layoutL.addLayout(list_layout)
 
         # Info & Cancel
-        info_layout = QHBoxLayout()
         self.info_label = QLabel("Info")
         self.info = QLabel()
-        info_layout.addWidget(self.info_label)
-        info_layout.addWidget(self.info)
-        layoutL.addLayout(info_layout)
         self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.setMaximumWidth(80)
-        layoutL.addWidget(self.cancel_button, alignment=Qt.AlignCenter)
 
-        # ---------- RIGHT PANEL: PREVIEW TOP + BOTTOM ----------
+        #================================================
+        #      RIGHT PANEL (file Preview)
+        #       (Divide 2 panels: top and bottom)
+        #================================================
+        
+        #-----------------------------------------------
+        #          Top Preview
+        #-----------------------------------------------
+        
         # Top preview: QStackedWidget (image, text, CAD placeholder)
         self.preview_top = QStackedWidget()
         # Index 0: image view
@@ -208,99 +172,193 @@ class FileSearch(QWidget):
         self.image_view.setAlignment(Qt.AlignCenter)
         self.image_view.setWordWrap(True)
         self.image_view.setStyleSheet("border: 1px solid lightgray;")
-        self.preview_top.addWidget(self.image_view)
         # Index 1: text view
         self.text_view = QTextEdit()
         self.text_view.setReadOnly(True)
-        self.preview_top.addWidget(self.text_view)
         # Index 2: CAD / placeholder
         self.cad_view = QLabel("CAD preview not implemented")
         self.cad_view.setAlignment(Qt.AlignCenter)
         self.cad_view.setStyleSheet("border: 1px dashed gray;")
-        self.preview_top.addWidget(self.cad_view)
 
-        # Bottom preview: media controls (created, but hidden by handler until used)
+        #-----------------------------------------------
+        #          Bottom Preview
+        #-----------------------------------------------
+
         self.preview_bottom = QWidget()
         self.preview_bottom.setMinimumHeight(120)
         self.preview_bottom.setStyleSheet("border: 1px solid lightgray; background: #fafafa;")
-        pb_layout = QHBoxLayout()
-        pb_layout.setContentsMargins(6, 6, 6, 6)
-
-        self.media_player = QMediaPlayer(self)
+        
+        # Media Player
+        self.player = QMediaPlayer()
+        
+        self.layoutR = QHBoxLayout()
+        self.layoutR.setContentsMargins(6, 6, 6, 6)
 
         #Audio Component
         self.audio_output = QAudioOutput(self)
         self.audio_output.setDevice(QMediaDevices.defaultAudioOutput())
         self.audio_output.setVolume(0.1) # 10%
-
-        self.media_player.setAudioOutput(self.audio_output)
         #Info Audio default output device
-        print("Audio device:", QMediaDevices.defaultAudioOutput().description())
-
-        # Media Controls
-        controls_layout = QVBoxLayout()
-        controls_row = QHBoxLayout()
+        # print("Audio device:", QMediaDevices.defaultAudioOutput().description())
+        
+        # Video widget Component
+        self.video_widget = QVideoWidget()
+        self.video_widget.setMinimumSize(400, 200)
         self.play_button = QPushButton("Play")
         self.stop_button = QPushButton("Stop")
+        self.seek = QLabel("Seek:")
         self.seek_slider = QSlider(Qt.Horizontal)
-        self.seek_slider.setRange(0, 100)
+        self.volume =QLabel("Volume:")
         self.volume_slider = QSlider(Qt.Horizontal)
+        
         self.volume_slider.setRange(0, 100)
         self.volume_slider.setValue(50)
-        controls_row.addWidget(self.play_button)
-        controls_row.addWidget(self.stop_button)
-        controls_row.addWidget(QLabel("Seek"))
-        controls_row.addWidget(self.seek_slider)
-        controls_row.addWidget(QLabel("Vol"))
-        controls_row.addWidget(self.volume_slider)
-        controls_layout.addLayout(controls_row)
-        controls_layout.addStretch()
+        self.seek_slider.setRange(0, 100)
         
         # Video widget
         self.video_widget = QVideoWidget()
         self.video_widget.setMinimumSize(400, 200)
-        pb_layout.addWidget(self.video_widget, stretch=3)
-        pb_layout.addLayout(controls_layout, stretch=5)
-        self.preview_bottom.setLayout(pb_layout)
-        # try:
-        #     self.media_player.setVideoOutput(self.video_widget)
-        # except:
-        #     pass
-        # Vertical splitter (top and bottom)
+
+    #----------------------------------------------------------------
+    def _build_layout(self):
+        #======================================
+        #          LEFT SIDE PANEL
+        #======================================
+        # self.layoutL = QVBoxLayout()
+        # L1: Language radios (actual labels will be set by handler)
+        lang_layout = QHBoxLayout()
+        lang_layout.addWidget(self.japanese_radio)
+        lang_layout.addWidget(self.english_radio)
+        lang_layout.addWidget(self.vietnamese_radio)
+        
+        # L2: Search Row
+        search_folder_layout = QHBoxLayout()
+        search_folder_layout.addWidget(self.search_folder_label)
+        search_folder_layout.addWidget(self.search_folder_path)
+        search_folder_layout.addWidget(self.search_folder_change)
+        # L3: Search Keyword Row
+        keyword_layout = QHBoxLayout()
+        keyword_layout.addWidget(self.search_label)
+        keyword_layout.addWidget(self.search_input)
+        keyword_layout.addWidget(self.search_button)
+        # L4: Search Logic Row
+        search_logic_layout = QHBoxLayout()
+        search_logic_layout.addWidget(self.or_radio)
+        search_logic_layout.addWidget(self.and_radio)
+        search_logic_layout.addWidget(self.not_radio)
+        # L5: File Type Row
+        file_type_layout = QHBoxLayout()
+        file_type_layout.addWidget(self.file_type_label)
+        file_type_layout.addWidget(self.file_type_combo)
+        
+        #L6 List Layout include list and Folder list box layout
+        folder_layout = QVBoxLayout()
+        folder_layout.addWidget(self.folder_label)
+        folder_layout.addWidget(self.folder_list)
+        
+        file_layout = QVBoxLayout()
+        file_layout.addWidget(self.file_label)
+        file_layout.addWidget(self.file_list)
+        #------------O-------------------
+        list_layout = QHBoxLayout()
+        list_layout.addLayout(folder_layout)
+        list_layout.addLayout(file_layout)
+        
+        # L7 Selected file Information
+        info_layout = QHBoxLayout()
+        info_layout.addWidget(self.info_label)
+        info_layout.addWidget(self.info)
+        # L8: Cancel Button
+        self.cancel_button.setMaximumWidth(80)
+        #-----------------------------------------
+        # Add all left layout to self.layoutL
+        #-----------------------------------------
+        self.layoutL.addLayout(lang_layout)
+        self.layoutL.addLayout(search_folder_layout)
+        self.layoutL.addLayout(keyword_layout)
+        self.layoutL.addLayout(search_logic_layout)
+        self.layoutL.addLayout(file_type_layout)
+        self.layoutL.addLayout(list_layout)
+        self.layoutL.addLayout(info_layout)
+        self.layoutL.addWidget(self.cancel_button, alignment=Qt.AlignCenter)
+        # self.preview_top = QStackedWidget()
+
+        #-----------------------------------------
+        # Add all top layouts to self.preview_top
+        #-----------------------------------------
+        self.preview_top.addWidget(self.image_view)
+        self.preview_top.addWidget(self.text_view)
+        self.preview_top.addWidget(self.cad_view)
+        #======================================
+        #          RIGHT SIDE PANEL
+        #======================================
+        #-----------------------------------------
+        # Add all right layout to self.layoutR
+        #-----------------------------------------
+        controls_layout = QVBoxLayout()
+        controls_row1 = QHBoxLayout()
+        controls_row2 = QHBoxLayout()
+        controls_row3 = QHBoxLayout()
+        
+        controls_row1.addWidget(self.play_button)
+        controls_row1.addWidget(self.stop_button)
+        
+        controls_row2.addWidget(self.seek)
+        controls_row2.addWidget(self.seek_slider)
+        
+        controls_row3.addWidget(self.volume)
+        controls_row3.addWidget(self.volume_slider)
+        
+        controls_layout.addLayout(controls_row1)
+        controls_layout.addLayout(controls_row2)
+        controls_layout.addLayout(controls_row3)
+        
+        controls_layout.addStretch()
+        
+        self.layoutR = QVBoxLayout()
+        
+        self.layoutR.addWidget(self.video_widget, stretch=3)
+        self.layoutR.addLayout(controls_layout, stretch=5)
+        
+        #-----------------------------------------
+        # Add all bottom layouts to self.preview_bottom
+        #-----------------------------------------
+        self.preview_bottom.setLayout(self.layoutR)
+        
+        self.player.setAudioOutput(self.audio_output)
+        try:
+            self.player.setVideoOutput(self.video_widget)
+        except:
+            pass
+
+        # Create Left and Right panels
+        left_panel = QWidget()
+        left_panel.setLayout(self.layoutL)
+        
         right_splitter = QSplitter(Qt.Vertical)
         right_splitter.addWidget(self.preview_top)
         right_splitter.addWidget(self.preview_bottom)
         right_splitter.setSizes([400, 120])
 
-        # Left-right splitter assembly
-        splitter = QSplitter(Qt.Horizontal)
-        left_panel = QWidget()
-        left_panel.setLayout(layoutL)
         right_panel = QWidget()
         right_panel_layout = QVBoxLayout()
         right_panel_layout.addWidget(right_splitter)
         right_panel.setLayout(right_panel_layout)
+        # Create splitter and add panels
+        splitter = QSplitter(Qt.Horizontal)
         splitter.addWidget(left_panel)
         splitter.addWidget(right_panel)
         splitter.setSizes([400, 600])
-
+        # Add splitter to main layout
         main_layout = QVBoxLayout()
         main_layout.addWidget(splitter)
         self.setLayout(main_layout)
-
-
-    # Small utility helpers (handler can use)
-    def _set_file_item(self, filename, fullpath):
-        item = QListWidgetItem(filename)
-        item.setData(Qt.UserRole, fullpath)
-        return item
-
-    def _add_file_list_items(self, list_widget, files, base_path=None):
-        list_widget.clear()
-        for f in files:
-            full = f if (base_path is None or os.path.isabs(f)) else os.path.join(base_path, f)
-            item = self._set_file_item(os.path.basename(f), os.path.abspath(full))
-            list_widget.addItem(item)
+        #-----------------------------------------
+        #Interaction
+        # self.mute_button.setCheckable(True)
+        self.seek_slider.setEnabled(False)
+        self.player.pause()   
+    #------------------------------------------------
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             QApplication.quit()
@@ -429,14 +487,20 @@ class FileSearchHandler(FileSearch):
         # Route selection through our handler that decides which preview to show
         self.file_list.currentItemChanged.connect(lambda current:show_file_info(self,current))
         self.file_list.itemDoubleClicked.connect(lambda item: open_file_location(self, item))
+    
+        #Volume Slider
+        self.volume_slider.valueChanged.connect(on_volume_changed)
+        # self.mute_button.clicked.connect(self.toggle_mute)
+        #Player
+        self.player.durationChanged.connect(lambda :on_duration_changed(self,50))
+        self.player.positionChanged.connect(self.seek_slider.setValue)
+        # self.player.positionChanged.connect(update_time_label)
+        self.player.durationChanged.connect(lambda :on_duration_changed(self,50))
+        #Buttons
+        self.play_button.clicked.connect(lambda :on_play(self))
+        self.stop_button.clicked.connect(lambda : on_stop(self))
         
-        # self.play_button.clicked.connect(on_play_clicked(self))
-        # self.stop_button.clicked.connect(on_stop_clicked(self))
-
-        # self.seek_slider.valueChanged.connect(on_seek_slider_moved(self,60))
-        # self.volume_slider.valueChanged.connect(on_volume_changed(self,20))
-        # self.media_player.durationChanged.connect(on_duration_changed(self))
-        # Cancel / quit
+    # Cancel / quit
         self.cancel_button.clicked.connect(QApplication.quit)
 
     #--------------------------------------------------------

@@ -186,7 +186,7 @@ class FileSearch(QWidget):
 
         self.preview_bottom = QWidget()
         self.preview_bottom.setMinimumHeight(120)
-        self.preview_bottom.setStyleSheet("border: 1px solid lightgray; background: #fafafa;")
+        # self.preview_bottom.setStyleSheet("border: 1px solid lightgray; background: #fafafa;")
         
         # Media Player
         self.player = QMediaPlayer()

@@ -315,11 +315,11 @@ def show_file_info(self,current):
         index = list(filter(lambda i:foundFolders[i] in file_path,range(len(foundFolders))))
         if index:
             self.folder_list.setCurrentRow(index[0])
-        full_path =self.found_files[self.file_list.row(current)]
+        self.full_path =self.found_files[self.file_list.row(current)]
         #Get file name
         short_path =fm.elidedText(self.found_files[self.file_list.row(current)],Qt.ElideMiddle,500)
         self.info.setText(short_path)
-        preview_file(self,full_path)
+        preview_file(self,self.full_path)
     except Exception as e:
             print("Preview routing error:", e)
             self.text_view.setText("[Preview error]")
@@ -480,7 +480,6 @@ def preview_file(self,path):
     else:
         ord = ord_list[0]
     filetype = [k.lower() for k,v in self.filetype.items() if ord in v][0]#Type to choose Preview code 
-    # SetBottomView(self,False)
     if filetype == "text": #Include image types
         main_text(self,path,ext,ord) # type: ignore
     # if filetype == "cad":
@@ -488,21 +487,7 @@ def preview_file(self,path):
     # if filetype == "prog":
     #     main_txt(self,path,ext,ord) # type: ignore
     elif filetype == "media":
-        # SetBottomView(self,True)
-        # print(self.preview_bottom.isVisible())
         main_media(self,path,ext,ord)
     else:
         self.text_view.setText("[Unsupported file type]")
         self.preview_top.setCurrentWidget(self.text_view)
-    # return
-
-
-def SetBottomView(self, show= False):
-    self.preview_bottom.setVisible(show)
-
-    if show:
-        self.preview_bottom.setMinimumHeight(80)
-    else:
-        self.preview_bottom.setMinimumHeight(0)
-
-    self.preview_bottom.updateGeometry()

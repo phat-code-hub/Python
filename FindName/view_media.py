@@ -1,18 +1,18 @@
 # media_view.py
-import math
+import os
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtMultimedia import QMediaPlayer
 import actions
 
 def main_media(self, filepath,ext,ord):
-    # self.player = QMediaPlayer()
     self.player.setVideoOutput(self.video_widget)
     self.player.setAudioOutput(self.audio_output)
     try:
         self.player.setSource(QUrl.fromLocalFile(filepath))
         self.player.setPosition(0)
     except Exception as e:
+        self.play_button.setText("Play")
         self.text_view.setText("[Cannot prepare media]")
         self.preview_top.setCurrentWidget(self.text_view)
 #------------------------------------------------------------------------
@@ -29,28 +29,29 @@ def on_play(self):
 def on_stop(self):
     self.player.stop()
     self.play_button.setText("Play")
-
+    show_media_thumbnail(self.full_path)
 #-------------Sound Control ----------------------------------
-def on_volume_changed(self, value = 10):
-    if value == 0:
-        volume = 0.0
-    else:
-        volume = math.pow(value / 100.0, 2.0)
+def on_volume_changed(self, value ):
+    normalized = value / self.MAX_VOL
+    volume = min(1.0, normalized ** 1.5)
     self.audio_output.setVolume(volume)
 #----------------------------------------
 def toggle_mute(self, checked):
     self.audio_output.setMuted(checked)
-    self.mute_button.setText("undue" if checked else "Mute")
+    self.mute_button.setText("Unmute" if checked else "Mute")
 
 
 #-------------Elapsed Timer --------------------------------------
 def on_slider_pressed(self):
+    self.is_seeking = True
     self.was_playing = (
         self.player.playbackState() == QMediaPlayer.PlayingState
     )
     self.player.pause()
 #----------------------------------------
 def on_slider_released(self):
+    self.is_seeking = False
+    self.player.setPosition(self.seek_slider.value())
     if self.was_playing:
         self.player.play()
 #----------------------------------------
@@ -63,56 +64,30 @@ def format_time(self, ms):
     return f"{s//60:02d}:{s%60:02d}"
 #----------------------------------------
 def update_time_label(self, position):
-    cur = self.format_time(position)
-    total = self.format_time(self.player.duration())
+    print("update_time_label called with:", position)
+    cur = format_time(self,position)
+    total = format_time(self,self.player.duration())
     self.timer.setText(f"{cur} / {total}")  
 
+def on_position_changed(self, pos):
+    if self.is_seeking:
+        return
+    self.seek_slider.setValue(pos)
+    update_time_label(self, pos)
 
 
-
-
-
-
-
-#------------------------------------------------------------------------
-# def on_position_changed(self, pos =5000):
-#     if self.player.duration() > 0:
-#         # val = int(pos * 1000 / self.player.duration())
-#         self.seek_slider.setRange(0,self.player.duration())
-#         self.seek_slider.blockSignals(True)
-#         self.seek_slider.setValue(pos)
-#         self.seek_slider.blockSignals(False)
-
-# def on_duration_changed(self, dur=100):
-#     # duration known - can be used to update UI (optional)
-#     if dur <= 0:
-#         self.seek_slider.setEnabled(False)
-#         return
-
-#     self.seek_slider.setEnabled(True)
-#     self.seek_slider.setRange(0, dur)
-
-# def on_seek_slider_moved(self, value):
-#     if self.player.duration() > 0:
-#         position = int(self.player.duration() * (value / 1000.0))
-#         self.player.setPosition(position)
-
-# def on_volume_changed(self, value):
-#     self.audio_output.setVolume(max(0.0, min(1.0, value / 100.0)))
-
-
-# def show_media_thumbnail(self, filepath):
-#     base, ext = os.path.splitext(filepath)
-#     for candidate_ext in (".jpg", ".jpeg", ".png", ".bmp"):
-#         candidate = base + candidate_ext
-#         if os.path.exists(candidate):
-#             pix = QPixmap(candidate)
-#             self.image_view.setPixmap(pix.scaled(
-#                 max(1, self.preview_top.width()),
-#                 max(1, self.preview_top.height()),
-#                 Qt.KeepAspectRatio,
-#                 Qt.SmoothTransformation))
-#             self.preview_top.setCurrentWidget(self.image_view)
-#             return
-#     self.text_view.setText(f"[Media file]\n{os.path.basename(filepath)}")
-#     self.preview_top.setCurrentWidget(self.text_view)
+def show_media_thumbnail(self,filepath):
+    base, ext = os.path.splitext(filepath)
+    for candidate_ext in (".jpg", ".jpeg", ".png", ".bmp"):
+        candidate = base + candidate_ext
+        if os.path.exists(candidate):
+            pix = QPixmap(candidate)
+            self.image_view.setPixmap(pix.scaled(
+                max(1, self.preview_top.width()),
+                max(1, self.preview_top.height()),
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation))
+            self.preview_top.setCurrentWidget(self.image_view)
+            return
+    self.text_view.setText(f"[Media file]\n{os.path.basename(filepath)}")
+    self.preview_top.setCurrentWidget(self.text_view)

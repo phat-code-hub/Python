@@ -1,7 +1,18 @@
-# Byte-compiled / optimized / DLL files
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python cache
 __pycache__/
-*.pyo
+*.pyc
 *.pyd
+# VS Code
+.vscode/
+
+# Windows
+*.exe
+
 
 # C extensions
 *.so

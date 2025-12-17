@@ -40,7 +40,7 @@ REG_DATA = {
     }
 
 REG_KEY = "FileSearch"
-APP_ID  =""
+MAX_VOL  = 400 # Max Volume
 MAPPING = {
             "en_US": "English",
             "en-EN": "English",

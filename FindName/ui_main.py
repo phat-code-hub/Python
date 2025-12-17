@@ -269,7 +269,7 @@ class FileSearch(QWidget):
         info_layout.addWidget(self.info_label)
         info_layout.addWidget(self.info)
         # L8: Cancel Button
-        self.cancel_button.setMaximumWidth(80)
+        
         #-----------------------------------------
         # Add all left layout to self.layoutL
         #-----------------------------------------
@@ -489,7 +489,7 @@ class FileSearchHandler(FileSearch):
         self.file_list.itemDoubleClicked.connect(lambda item: open_file_location(self, item))
     
         #Volume Slider
-        self.volume_slider.valueChanged.connect(on_volume_changed)
+        self.volume_slider.valueChanged.connect(lambda value:   on_volume_changed(self,value))
         # self.mute_button.clicked.connect(self.toggle_mute)
         #Player
         self.player.durationChanged.connect(lambda :on_duration_changed(self,50))

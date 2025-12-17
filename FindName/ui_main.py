@@ -81,7 +81,6 @@ class FileSearch(QWidget):
         self.LOCALE = InitInfo().LANG
         self.language,self.search_path = get_registry_values(self)
         self.APP_NAME = TITLE[self.language]
-        self.MAX_VOL = MAX_VOL
         self.lang = LANGUAGES
         self.options = OPTIONS
         self.place_holder =PLACE_HOLDER
@@ -101,10 +100,12 @@ class FileSearch(QWidget):
         self.filetype = VIEW_EXT
         # self.readable_cad_ext =CAD_EXT
         self.init =True
-        self.is_seeking = False
 
     def _build_ui(self):
         # Hold basic Info
+        self.setWindowTitle(self.APP_NAME)
+        self.setGeometry(100, 100, 1000, 600)
+        self.icon = resource_path(self,"favicon.ico")
         #================================================
         #      LEFT PANEL (file controls)
         #================================================
@@ -122,6 +123,7 @@ class FileSearch(QWidget):
         self.search_folder_label = QLabel("Search Path")
         self.search_folder_path = QLabel("")
         self.search_folder_change = QPushButton("...")
+        self.search_folder_change.setFixedSize(50, 30)
 
         # Keyword row
         self.search_label = QLabel("Keyword")
@@ -160,87 +162,63 @@ class FileSearch(QWidget):
         #================================================
         
         #-----------------------------------------------
-        # Top Preview QStackedWidget (image, text, CAD placeholder)
+        #          Top Preview
         #-----------------------------------------------
+        
+        # Top preview: QStackedWidget (image, text, CAD placeholder)
         self.preview_top = QStackedWidget()
         # Index 0: image view
         self.image_view = QLabel("No preview")
+        self.image_view.setAlignment(Qt.AlignCenter)
+        self.image_view.setWordWrap(True)
+        self.image_view.setStyleSheet("border: 1px solid lightgray;")
         # Index 1: text view
         self.text_view = QTextEdit()
+        self.text_view.setReadOnly(True)
         # Index 2: CAD / placeholder
         self.cad_view = QLabel("CAD preview not implemented")
+        self.cad_view.setAlignment(Qt.AlignCenter)
+        self.cad_view.setStyleSheet("border: 1px dashed gray;")
 
         #-----------------------------------------------
         #          Bottom Preview
         #-----------------------------------------------
+
         self.preview_bottom = QWidget()
-<<<<<<< HEAD
         self.preview_bottom.setMinimumHeight(120)
         # self.preview_bottom.setStyleSheet("border: 1px solid lightgray; background: #fafafa;")
         
-=======
->>>>>>> 0745afb579edd9522db2bc9cd38f90af5dc19fca
         # Media Player
         self.player = QMediaPlayer()
+        
         self.layoutR = QHBoxLayout()
+        self.layoutR.setContentsMargins(6, 6, 6, 6)
+
         #Audio Component
         self.audio_output = QAudioOutput(self)
+        self.audio_output.setDevice(QMediaDevices.defaultAudioOutput())
+        self.audio_output.setVolume(0.1) # 10%
         #Info Audio default output device
         # print("Audio device:", QMediaDevices.defaultAudioOutput().description())
         
+        # Video widget Component
+        self.video_widget = QVideoWidget()
+        self.video_widget.setMinimumSize(400, 200)
         self.play_button = QPushButton("Play")
         self.stop_button = QPushButton("Stop")
         self.seek = QLabel("Seek:")
         self.seek_slider = QSlider(Qt.Horizontal)
-        self.timer = QLabel("00:00 / 00:00")
         self.volume =QLabel("Volume:")
         self.volume_slider = QSlider(Qt.Horizontal)
-        self.mute_button = QPushButton("Mute")
+        
+        self.volume_slider.setRange(0, 100)
+        self.volume_slider.setValue(50)
+        self.seek_slider.setRange(0, 100)
         
         # Video widget
         self.video_widget = QVideoWidget()
-        #-----------------------------------------------
-        #          IInitialize Setting
-        #-----------------------------------------------
-        self.setWindowTitle(self.APP_NAME)
-        self.icon = resource_path(self,"favicon.ico")
-        #-------------Top Panel-------------------
-        self.image_view.setAlignment(Qt.AlignCenter)
-        self.image_view.setWordWrap(True)
-        self.image_view.setStyleSheet("border: 1px solid lightgray;")
-        #-------------Bottom Panel-------------------
-        self.preview_bottom.setMinimumHeight(100) # ensure minimum height
-        self.preview_bottom.setStyleSheet("border: 1px solid lightgray; background: #fafafa;")
-        
-        # Set Controls Size
-        self.setGeometry(100, 100, 1000, 600)
-        self.search_folder_change.setFixedSize(50, 30)
-        self.layoutR.setContentsMargins(6, 6, 6, 6)
-        self.seek.setMinimumWidth(60)
-        self.volume.setMinimumWidth(60)
-        self.timer.setMinimumWidth(100)
-        self.mute_button.setMinimumWidth(100)
-        self.video_widget.setMinimumSize(200, 100)
-        self.preview_bottom.setMinimumHeight(100) # ensure minimum height
-        #---------- Other settings-------------------------
-        self.text_view.setReadOnly(True) 
-        self.cad_view.setAlignment(Qt.AlignCenter)
-        self.cad_view.setStyleSheet("border: 1px dashed gray;")
-        self.audio_output.setDevice(QMediaDevices.defaultAudioOutput())
-        self.audio_output.setVolume(0.1) # 10%
-        self.volume_slider.setRange(0,250)
-        self.volume_slider.setValue(50)
-        self.seek_slider.setRange(0, 100)
-        self.timer.setAlignment(Qt.AlignCenter)
-        # set policy to expand
-        self.video_widget.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Expanding
-        )
-        #Interaction
-        self.mute_button.setCheckable(True)
-        self.seek_slider.setEnabled(False)
-        self.player.pause()
+        self.video_widget.setMinimumSize(400, 200)
+
     #----------------------------------------------------------------
     def _build_layout(self):
         #======================================
@@ -327,11 +305,9 @@ class FileSearch(QWidget):
         
         controls_row2.addWidget(self.seek)
         controls_row2.addWidget(self.seek_slider)
-        controls_row2.addWidget(self.timer)
         
         controls_row3.addWidget(self.volume)
         controls_row3.addWidget(self.volume_slider)
-        controls_row3.addWidget(self.mute_button)
         
         controls_layout.addLayout(controls_row1)
         controls_layout.addLayout(controls_row2)
@@ -341,8 +317,8 @@ class FileSearch(QWidget):
         
         self.layoutR = QVBoxLayout()
         
-        self.layoutR.addWidget(self.video_widget, stretch=5)
-        self.layoutR.addLayout(controls_layout, stretch=2)
+        self.layoutR.addWidget(self.video_widget, stretch=3)
+        self.layoutR.addLayout(controls_layout, stretch=5)
         
         #-----------------------------------------
         # Add all bottom layouts to self.preview_bottom
@@ -362,12 +338,8 @@ class FileSearch(QWidget):
         right_splitter = QSplitter(Qt.Vertical)
         right_splitter.addWidget(self.preview_top)
         right_splitter.addWidget(self.preview_bottom)
-        # Split equal height 
-        right_splitter.setStretchFactor(0, 7)  # preview_top
-        right_splitter.setStretchFactor(1, 3)  # preview_bottom
-        #lock splitter to prevent resizing
-        right_splitter.setChildrenCollapsible(False)
-        
+        right_splitter.setSizes([400, 120])
+
         right_panel = QWidget()
         right_panel_layout = QVBoxLayout()
         right_panel_layout.addWidget(right_splitter)
@@ -381,6 +353,11 @@ class FileSearch(QWidget):
         main_layout = QVBoxLayout()
         main_layout.addWidget(splitter)
         self.setLayout(main_layout)
+        #-----------------------------------------
+        #Interaction
+        # self.mute_button.setCheckable(True)
+        self.seek_slider.setEnabled(False)
+        self.player.pause()   
     #------------------------------------------------
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
@@ -442,7 +419,6 @@ class FileSearchHandler(FileSearch):
             self.REG_KEY = info.REG_KEY
             self.OS = info.OS
             self.LOCALE = info.LANG
-            self.full_path = os.path.expanduser("~")
             # get language and search_path
             self.language, self.search_path = get_registry_values(self)
         except Exception:
@@ -513,30 +489,13 @@ class FileSearchHandler(FileSearch):
         self.file_list.itemDoubleClicked.connect(lambda item: open_file_location(self, item))
     
         #Volume Slider
-        self.volume_slider.valueChanged.connect(
-            lambda value:  on_volume_changed(self,value)
-            )
-        self.mute_button.clicked.connect(
-            lambda checked: toggle_mute(self,checked)
-            )
+        self.volume_slider.valueChanged.connect(on_volume_changed)
+        # self.mute_button.clicked.connect(self.toggle_mute)
         #Player
-        self.player.durationChanged.connect(
-            lambda duration :on_duration_changed(self,duration)
-            )
-        self.player.positionChanged.connect(
-            lambda pos: on_position_changed(self, pos)
-            )
-        #Elapsed time Slider
-        self.seek_slider.sliderPressed.connect(
-            lambda : on_slider_pressed(self)
-            )
-        self.seek_slider.sliderReleased.connect(
-            lambda : on_slider_released(self)
-            )
-        self.seek_slider.sliderMoved.connect(
-            lambda value: self.player.setPosition(value)
-            )
-        
+        self.player.durationChanged.connect(lambda :on_duration_changed(self,50))
+        self.player.positionChanged.connect(self.seek_slider.setValue)
+        # self.player.positionChanged.connect(update_time_label)
+        self.player.durationChanged.connect(lambda :on_duration_changed(self,50))
         #Buttons
         self.play_button.clicked.connect(lambda :on_play(self))
         self.stop_button.clicked.connect(lambda : on_stop(self))
